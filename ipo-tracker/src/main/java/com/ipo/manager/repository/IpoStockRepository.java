@@ -1,9 +1,15 @@
 package com.ipo.manager.repository;
 
 import com.ipo.manager.domain.IpoStock;
-import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
-public interface IpoStockRepository extends JpaRepository<IpoStock, Long> {
-    Optional<IpoStock> findByStockName(String stockName);
+import java.util.List;
+
+@Mapper
+public interface IpoStockRepository {
+    List<IpoStock> findAll();
+    IpoStock findByStockName(@Param("stockName") String stockName);
+    void insert(IpoStock stock);
+    void update(IpoStock stock);
 }

@@ -1,10 +1,17 @@
 package com.ipo.manager.repository;
 
 import com.ipo.manager.domain.IpoSubscription;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
 
-public interface IpoSubscriptionRepository extends JpaRepository<IpoSubscription, Long> {
-    List<IpoSubscription> findByYearOrderByIdDesc(int year);
-    List<IpoSubscription> findBySoldDateIsNotNullAndYear(int year);
+@Mapper
+public interface IpoSubscriptionRepository {
+    List<IpoSubscription> findByYear(@Param("year") int year);
+    List<IpoSubscription> findByYearWithSoldDate(@Param("year") int year);
+    IpoSubscription findById(@Param("id") Long id);
+    void insert(IpoSubscription entity);
+    void update(IpoSubscription entity);
+    void deleteById(@Param("id") Long id);
 }

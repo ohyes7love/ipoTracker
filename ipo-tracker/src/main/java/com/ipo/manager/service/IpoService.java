@@ -27,32 +27,32 @@ public class IpoService {
     }
 
     public List<IpoDto> getByYear(int year) {
-        return repository.findByYearOrderByIdDesc(year)
+        return repository.findByYear(year)
                 .stream().map(IpoDto::from).collect(Collectors.toList());
     }
 
     public IpoDto create(IpoDto dto) {
         IpoSubscription entity = dto.toEntity();
+        repository.insert(entity);
         ensureIpoStock(dto);
-        return IpoDto.from(repository.save(entity));
+        return IpoDto.from(entity);
     }
 
     public IpoDto update(Long id, IpoDto dto) {
-        IpoSubscription entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Not found: " + id));
+        IpoSubscription entity = repository.findById(id);
+        if (entity == null) throw new RuntimeException("Not found: " + id);
         entity.setStockName(dto.getStockName());
         entity.setBroker(dto.getBroker());
         entity.setOfferingPrice(dto.getOfferingPrice());
-        entity.setSubscriptionQty(dto.getSubscriptionQty());
-        entity.setAllocatedQty(dto.getAllocatedQty());
         entity.setSoldQty(dto.getSoldQty() != null ? dto.getSoldQty() : 0);
         entity.setSoldDate(dto.getSoldDate());
         entity.setSoldPrice(dto.getSoldPrice());
         entity.setTaxAndFee(dto.getTaxAndFee() != null ? dto.getTaxAndFee() : 0L);
         entity.setSubscriptionFee(dto.getSubscriptionFee() != null ? dto.getSubscriptionFee() : 0L);
         entity.setYear(dto.getYear() != null ? dto.getYear() : entity.getYear());
+        repository.update(entity);
         ensureIpoStock(dto);
-        return IpoDto.from(repository.save(entity));
+        return IpoDto.from(entity);
     }
 
     public void delete(Long id) {
@@ -60,7 +60,7 @@ public class IpoService {
     }
 
     public List<MonthlySummaryDto> getMonthlySummary(int year) {
-        List<IpoSubscription> soldList = repository.findBySoldDateIsNotNullAndYear(year);
+        List<IpoSubscription> soldList = repository.findByYearWithSoldDate(year);
         Map<Integer, Long> monthlyMap = soldList.stream()
                 .filter(e -> e.getProfit() != null)
                 .collect(Collectors.groupingBy(
@@ -74,28 +74,28 @@ public class IpoService {
         return result;
     }
 
-    // IpoStock methods
     public List<IpoStock> getAllStocks() {
         return stockRepository.findAll();
     }
 
     public IpoStock createStock(IpoStock stock) {
-        return stockRepository.save(stock);
+        stockRepository.insert(stock);
+        return stock;
     }
 
     private void ensureIpoStock(IpoDto dto) {
         if (dto.getStockName() == null || dto.getStockName().isBlank()) return;
-        stockRepository.findByStockName(dto.getStockName()).ifPresentOrElse(
-                existing -> {
-                    if (dto.getOfferingPrice() != null) existing.setOfferingPrice(dto.getOfferingPrice());
-                    stockRepository.save(existing);
-                },
-                () -> {
-                    IpoStock stock = new IpoStock();
-                    stock.setStockName(dto.getStockName());
-                    stock.setOfferingPrice(dto.getOfferingPrice());
-                    stockRepository.save(stock);
-                }
-        );
+        IpoStock existing = stockRepository.findByStockName(dto.getStockName());
+        if (existing != null) {
+            if (dto.getOfferingPrice() != null) {
+                existing.setOfferingPrice(dto.getOfferingPrice());
+                stockRepository.update(existing);
+            }
+        } else {
+            IpoStock stock = new IpoStock();
+            stock.setStockName(dto.getStockName());
+            stock.setOfferingPrice(dto.getOfferingPrice());
+            stockRepository.insert(stock);
+        }
     }
 }

@@ -1,45 +1,18 @@
 package com.ipo.manager.domain;
 
-import jakarta.persistence.*;
 import java.time.LocalDate;
 
-@Entity
-@Table(name = "IPO_SUBSCRIPTION")
 public class IpoSubscription {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
     private String stockName;
-
-    @Column(nullable = false)
     private String broker;
-
-    @Column(nullable = false)
     private Long offeringPrice;
-
-    @Column(nullable = false)
-    private Integer subscriptionQty;
-
-    @Column(nullable = false)
-    private Integer allocatedQty;
-
-    @Column(nullable = false)
     private Integer soldQty;
-
     private LocalDate soldDate;
-
     private Long soldPrice;
-
-    @Column(nullable = false)
     private Long taxAndFee = 0L;
-
-    @Column(nullable = false)
     private Long subscriptionFee = 0L;
-
-    @Column(name = "SUBSCRIPTION_YEAR", nullable = false)
     private Integer year;
 
     public Long getId() { return id; }
@@ -53,12 +26,6 @@ public class IpoSubscription {
 
     public Long getOfferingPrice() { return offeringPrice; }
     public void setOfferingPrice(Long offeringPrice) { this.offeringPrice = offeringPrice; }
-
-    public Integer getSubscriptionQty() { return subscriptionQty; }
-    public void setSubscriptionQty(Integer subscriptionQty) { this.subscriptionQty = subscriptionQty; }
-
-    public Integer getAllocatedQty() { return allocatedQty; }
-    public void setAllocatedQty(Integer allocatedQty) { this.allocatedQty = allocatedQty; }
 
     public Integer getSoldQty() { return soldQty; }
     public void setSoldQty(Integer soldQty) { this.soldQty = soldQty; }
@@ -78,16 +45,19 @@ public class IpoSubscription {
     public Integer getYear() { return year; }
     public void setYear(Integer year) { this.year = year; }
 
-    @Transient
     public Long getProfit() {
-        if (soldPrice == null || allocatedQty == null || offeringPrice == null) return null;
-        return (soldPrice - offeringPrice) * allocatedQty - taxAndFee - subscriptionFee;
+        if (soldPrice == null) return null;
+        long qty = soldQty != null ? soldQty : 0;
+        long fee = taxAndFee != null ? taxAndFee : 0L;
+        long subFee = subscriptionFee != null ? subscriptionFee : 0L;
+        return (soldPrice - offeringPrice) * qty - fee - subFee;
     }
 
-    @Transient
     public Double getProfitRate() {
         Long profit = getProfit();
-        if (profit == null || allocatedQty == 0 || offeringPrice == 0) return null;
-        return (double) profit / (offeringPrice * allocatedQty) * 100.0;
+        if (profit == null) return null;
+        long qty = soldQty != null ? soldQty : 0;
+        if (qty == 0 || offeringPrice == null || offeringPrice == 0) return null;
+        return (double) profit / (offeringPrice * qty) * 100.0;
     }
 }

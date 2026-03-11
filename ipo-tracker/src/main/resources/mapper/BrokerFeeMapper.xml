@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ipo.manager.repository.BrokerFeeRepository">
+
+    <select id="findAll" resultType="com.ipo.manager.domain.BrokerFee">
+        SELECT id, broker_name, fee_amount
+        FROM broker_fee
+        ORDER BY broker_name
+    </select>
+
+    <select id="findByBrokerName" resultType="com.ipo.manager.domain.BrokerFee">
+        SELECT id, broker_name, fee_amount
+        FROM broker_fee
+        WHERE broker_name = #{brokerName}
+    </select>
+
+    <update id="update">
+        UPDATE broker_fee SET fee_amount = #{feeAmount}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

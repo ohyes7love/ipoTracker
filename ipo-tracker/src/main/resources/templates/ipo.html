@@ -2,60 +2,161 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>청약 내역 - 공모주 수익 관리</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .table { font-size: 0.85rem; }
-        .table th, .table td { white-space: nowrap; vertical-align: middle; }
-        .profit-plus { color: #dc3545; font-weight: bold; }
-        .profit-minus { color: #0d6efd; font-weight: bold; }
+        body { background: #f5f6fa; padding-bottom: 80px; font-size: 14px; }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: #0d6efd; display: flex; border-top: 1px solid #0b5ed7;
+        }
+        .bottom-nav a {
+            flex: 1; color: rgba(255,255,255,0.7); text-decoration: none;
+            text-align: center; padding: 10px 0; font-size: 12px; line-height: 1.3;
+        }
+        .bottom-nav a.active { color: #fff; font-weight: 700; }
+        .bottom-nav a span { display: block; font-size: 18px; }
+
+        /* 상단 툴바 */
+        .top-bar {
+            background: #0d6efd; color: #fff; padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar h1 { font-size: 16px; margin: 0; font-weight: 700; }
+
+        /* 연도 + 등록 버튼 */
+        .filter-bar {
+            padding: 10px 12px; background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .filter-bar select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid #ced4da; }
+        .filter-bar .btn-add {
+            margin-left: auto; background: #0d6efd; color: #fff;
+            border: none; border-radius: 8px; padding: 7px 16px; font-size: 14px; font-weight: 600;
+        }
+
+        /* 카드 목록 */
+        .ipo-list { padding: 10px 12px; }
+
+        .ipo-card {
+            background: #fff; border-radius: 12px; margin-bottom: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
+        }
+        .ipo-card-header {
+            padding: 10px 14px 6px;
+            display: flex; align-items: flex-start; justify-content: space-between;
+        }
+        .stock-name { font-size: 15px; font-weight: 700; color: #222; }
+        .card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .btn-edit {
+            background: #fff3cd; color: #856404; border: 1px solid #ffc107;
+            border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+        }
+        .btn-del {
+            background: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
+            border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+        }
+        .ipo-card-body { padding: 4px 14px 12px; }
+        .info-row { display: flex; flex-wrap: wrap; gap: 4px 16px; color: #555; font-size: 12px; margin-bottom: 4px; }
+        .info-row span { white-space: nowrap; }
+        .profit-row {
+            display: flex; justify-content: flex-end; align-items: baseline;
+            gap: 8px; margin-top: 6px;
+        }
+        .profit-val { font-size: 16px; font-weight: 700; }
+        .profit-rate { font-size: 13px; font-weight: 600; }
+        .profit-plus { color: #dc3545; }
+        .profit-minus { color: #0d6efd; }
+        .profit-zero  { color: #6c757d; }
+
+        /* 합계 바 */
+        .total-bar {
+            position: fixed; bottom: 56px; left: 0; right: 0; z-index: 99;
+            background: #1e2a3a; color: #fff; padding: 10px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 14px;
+        }
+        .total-bar .label { color: #adb5bd; }
+        .total-bar .amount { font-size: 18px; font-weight: 700; }
+
+        /* 자동완성 */
         .autocomplete-wrap { position: relative; }
-        .autocomplete-list { position: absolute; z-index: 1050; background: #fff; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; width: 100%; }
-        .autocomplete-list div { padding: 6px 10px; cursor: pointer; font-size: 0.85rem; }
-        .autocomplete-list div:hover { background: #e9ecef; }
+        .autocomplete-list {
+            position: absolute; z-index: 2000; background: #fff;
+            border: 1px solid #ccc; border-radius: 8px;
+            max-height: 200px; overflow-y: auto; width: 100%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .autocomplete-list div { padding: 8px 12px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
+        .autocomplete-list div:last-child { border-bottom: none; }
+        .autocomplete-list div:active { background: #e9ecef; }
+
+        /* 모달 */
+        .modal-dialog { margin: 0; max-width: 100%; }
+        .modal-content { border-radius: 16px 16px 0 0; min-height: 60vh; }
+        .modal.fade .modal-dialog { transform: translateY(100%); transition: transform 0.3s ease-out; }
+        .modal.show .modal-dialog { transform: translateY(0); }
+        .modal-dialog-scrollable .modal-body { overflow-y: auto; }
+        @media (min-width: 576px) {
+            .modal-dialog { margin: 1.75rem auto; max-width: 500px; }
+            .modal-content { border-radius: 12px; min-height: unset; }
+            .modal.fade .modal-dialog { transform: translateY(-50px); }
+        }
+
+        .form-label { font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 4px; }
+        .form-control, .form-select { font-size: 14px; border-radius: 8px; }
+        .modal-header { border-bottom: 1px solid #eee; padding: 14px 16px; }
+        .modal-footer { border-top: 1px solid #eee; padding: 10px 16px; }
+        .modal-body { padding: 14px 16px; }
+
+        .empty-state { text-align: center; padding: 48px 0; color: #adb5bd; font-size: 14px; }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/">공모주 수익 관리</a>
-        <div class="navbar-nav">
-            <a class="nav-link" href="/">대시보드</a>
-            <a class="nav-link active" href="/ipo">청약 내역</a>
-            <a class="nav-link" href="/broker-fees">수수료 관리</a>
-        </div>
-    </div>
-</nav>
-<div class="container-fluid mt-3">
-    <div class="row mb-3 align-items-end">
-        <div class="col-auto">
-            <label class="form-label fw-bold">연도</label>
-            <select id="yearSelect" class="form-select form-select-sm"></select>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#ipoModal" onclick="openCreateModal()">+ 등록</button>
-        </div>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover table-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>공모주명</th><th>증권사</th>
-                    <th>공모가</th><th>청약수량</th><th>배정수량</th><th>매도수량</th>
-                    <th>매도일</th><th>매도가</th>
-                    <th>세금+수수료</th><th>청약수수료</th>
-                    <th>수익</th><th>수익률</th><th>관리</th>
-                </tr>
-            </thead>
-            <tbody id="ipoTableBody"></tbody>
-        </table>
-    </div>
+
+<!-- 상단 바 -->
+<div class="top-bar">
+    <h1>청약 내역</h1>
 </div>
 
-<!-- Modal -->
+<!-- 연도 + 등록 -->
+<div class="filter-bar">
+    <select id="yearSelect"></select>
+    <button class="btn-add" onclick="openCreateModal()">+ 등록</button>
+</div>
+
+<!-- 카드 목록 -->
+<div class="ipo-list" id="ipoList">
+    <div class="empty-state">데이터를 불러오는 중...</div>
+</div>
+
+<!-- 합계 바 -->
+<div class="total-bar">
+    <span class="label">합계 수익</span>
+    <span class="amount profit-zero" id="totalSum">0 원</span>
+</div>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="/">
+        <span>📊</span>대시보드
+    </a>
+    <a href="/ipo" class="active">
+        <span>📋</span>청약내역
+    </a>
+    <a href="/broker-fees">
+        <span>💰</span>수수료
+    </a>
+</nav>
+
+<!-- 등록/수정 모달 -->
 <div class="modal fade" id="ipoModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-scrollable" style="position:fixed;bottom:0;width:100%;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalTitle">청약 등록</h5>
@@ -64,67 +165,63 @@
             <div class="modal-body">
                 <form id="ipoForm" autocomplete="off">
                     <input type="hidden" id="formId">
-                    <div class="row g-2">
-                        <div class="col-md-5">
-                            <label class="form-label">공모주명</label>
-                            <div class="autocomplete-wrap">
-                                <input type="text" class="form-control form-control-sm" id="stockName" required placeholder="종목명 입력 또는 선택">
-                                <div id="stockAutocomplete" class="autocomplete-list" style="display:none"></div>
-                            </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">공모주명</label>
+                        <div class="autocomplete-wrap">
+                            <input type="text" class="form-control" id="stockName" required placeholder="종목명 검색">
+                            <div id="stockAutocomplete" class="autocomplete-list" style="display:none"></div>
                         </div>
-                        <div class="col-md-4">
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-7">
                             <label class="form-label">증권사</label>
-                            <select class="form-select form-select-sm" id="broker" required>
+                            <select class="form-select" id="broker" required>
                                 <option value="">선택</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-5">
                             <label class="form-label">청약수수료</label>
-                            <input type="number" class="form-control form-control-sm" id="subscriptionFee" value="0">
+                            <input type="number" class="form-control" id="subscriptionFee" value="0" inputmode="numeric">
                         </div>
                     </div>
-                    <div class="row g-2 mt-1">
-                        <div class="col-md-3">
-                            <label class="form-label">공모가</label>
-                            <input type="number" class="form-control form-control-sm" id="offeringPrice" required>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">공모가 (원)</label>
+                            <input type="number" class="form-control" id="offeringPrice" required inputmode="numeric">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">청약수량</label>
-                            <input type="number" class="form-control form-control-sm" id="subscriptionQty" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">배정수량</label>
-                            <input type="number" class="form-control form-control-sm" id="allocatedQty" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">매도수량</label>
-                            <input type="number" class="form-control form-control-sm" id="soldQty" value="0">
+                        <div class="col-6">
+                            <label class="form-label">매도수량 (주)</label>
+                            <input type="number" class="form-control" id="soldQty" value="0" inputmode="numeric">
                         </div>
                     </div>
-                    <div class="row g-2 mt-1">
-                        <div class="col-md-3">
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
                             <label class="form-label">매도일</label>
-                            <input type="date" class="form-control form-control-sm" id="soldDate">
+                            <input type="date" class="form-control" id="soldDate">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">매도가</label>
-                            <input type="number" class="form-control form-control-sm" id="soldPrice">
+                        <div class="col-6">
+                            <label class="form-label">매도가 (원)</label>
+                            <input type="number" class="form-control" id="soldPrice" inputmode="numeric">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">세금+매도수수료</label>
-                            <input type="number" class="form-control form-control-sm" id="taxAndFee" value="0">
-                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label">세금+매도수수료 (원)</label>
+                        <input type="number" class="form-control" id="taxAndFee" value="0" inputmode="numeric">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">취소</button>
-                <button type="button" class="btn btn-primary btn-sm" onclick="saveIpo()">저장</button>
+                <button type="button" class="btn btn-secondary w-50" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary w-50" onclick="saveIpo()">저장</button>
             </div>
         </div>
     </div>
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -132,18 +229,18 @@
     let brokerFees = {};
     let ipoStocks = [];
 
+    // 연도 셀렉터 초기화
     (function initYearSelect() {
         const sel = document.getElementById('yearSelect');
         for (let y = currentYear - 2; y <= currentYear + 1; y++) {
             const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
+            opt.value = y; opt.textContent = y + '년';
             if (y === currentYear) opt.selected = true;
             sel.appendChild(opt);
         }
     })();
 
-    // Load broker fees
+    // 증권사 수수료 로드
     fetch('/api/broker-fees').then(r => r.json()).then(fees => {
         const sel = document.getElementById('broker');
         fees.forEach(f => {
@@ -155,27 +252,14 @@
         });
     });
 
-    // Load IPO stocks for autocomplete (로컬 DB + DART + KRX 전체 종목 병합)
+    // 국내주식 전체목록 로드 (KRX + 로컬 DB + DART)
     function loadStocks() {
         fetch('/api/ipo/stocks').then(r => r.json()).then(data => {
             ipoStocks = data;
+            const names = new Set(ipoStocks.map(s => s.stockName));
 
-            // DART 공모주 추가
-            fetch('/api/dart/ipos').then(r => r.json()).then(dartData => {
-                if (!Array.isArray(dartData)) return;
-                const names = new Set(ipoStocks.map(s => s.stockName));
-                dartData.forEach(item => {
-                    if (!names.has(item.corpName)) {
-                        ipoStocks.push({ stockName: item.corpName, offeringPrice: null });
-                        names.add(item.corpName);
-                    }
-                });
-            }).catch(() => {});
-
-            // KRX 전체 상장 종목 추가 (백그라운드 로딩)
             fetch('/api/krx/stocks').then(r => r.json()).then(krxData => {
                 if (!Array.isArray(krxData)) return;
-                const names = new Set(ipoStocks.map(s => s.stockName));
                 krxData.forEach(item => {
                     if (item.stockName && !names.has(item.stockName)) {
                         ipoStocks.push({ stockName: item.stockName, offeringPrice: null });
@@ -183,24 +267,34 @@
                     }
                 });
             }).catch(() => {});
+
+            fetch('/api/dart/ipos').then(r => r.json()).then(dartData => {
+                if (!Array.isArray(dartData)) return;
+                dartData.forEach(item => {
+                    if (!names.has(item.corpName)) {
+                        ipoStocks.push({ stockName: item.corpName, offeringPrice: null });
+                        names.add(item.corpName);
+                    }
+                });
+            }).catch(() => {});
         });
     }
     loadStocks();
 
-    // Autocomplete
+    // 자동완성
     const stockNameInput = document.getElementById('stockName');
     const autocompleteDiv = document.getElementById('stockAutocomplete');
 
     function showAutocomplete(val) {
         const matches = val
-            ? ipoStocks.filter(s => s.stockName.includes(val))
-            : ipoStocks;
+            ? ipoStocks.filter(s => s.stockName.includes(val)).slice(0, 50)
+            : [];
         if (matches.length === 0) { autocompleteDiv.style.display = 'none'; return; }
         autocompleteDiv.innerHTML = '';
         matches.forEach(s => {
             const div = document.createElement('div');
             div.textContent = s.offeringPrice != null
-                ? s.stockName + ' - ' + Number(s.offeringPrice).toLocaleString() + '원'
+                ? s.stockName + ' (' + Number(s.offeringPrice).toLocaleString() + '원)'
                 : s.stockName;
             div.addEventListener('mousedown', function(e) {
                 e.preventDefault();
@@ -213,19 +307,9 @@
         autocompleteDiv.style.display = 'block';
     }
 
-    stockNameInput.addEventListener('focus', function() {
-        showAutocomplete(this.value.trim());
-    });
+    stockNameInput.addEventListener('input', function() { showAutocomplete(this.value.trim()); });
+    stockNameInput.addEventListener('blur', function() { setTimeout(() => { autocompleteDiv.style.display = 'none'; }, 200); });
 
-    stockNameInput.addEventListener('input', function() {
-        showAutocomplete(this.value.trim());
-    });
-
-    stockNameInput.addEventListener('blur', function() {
-        setTimeout(() => { autocompleteDiv.style.display = 'none'; }, 200);
-    });
-
-    // Auto-fill subscription fee when broker changes
     document.getElementById('broker').addEventListener('change', function() {
         const fee = brokerFees[this.value];
         if (fee !== undefined) document.getElementById('subscriptionFee').value = fee;
@@ -233,27 +317,78 @@
 
     function fmt(v) { return v != null ? Number(v).toLocaleString() : '-'; }
 
+    function profitClass(p) {
+        if (p == null) return 'profit-zero';
+        return p > 0 ? 'profit-plus' : (p < 0 ? 'profit-minus' : 'profit-zero');
+    }
+
+    function profitSign(p) {
+        if (p == null || p === 0) return '';
+        return p > 0 ? '+' : '';
+    }
+
     function loadTable(year) {
         fetch('/api/ipo?year=' + year).then(r => r.json()).then(list => {
-            const tbody = document.getElementById('ipoTableBody');
-            tbody.innerHTML = '';
+            const container = document.getElementById('ipoList');
+            const totalEl = document.getElementById('totalSum');
+
+            if (list.length === 0) {
+                container.innerHTML = '<div class="empty-state">등록된 청약 내역이 없습니다.</div>';
+                totalEl.textContent = '0 원';
+                totalEl.className = 'amount profit-zero';
+                return;
+            }
+
+            let totalProfit = 0;
+            let html = '';
             list.forEach(d => {
-                const profitClass = d.profit != null ? (d.profit >= 0 ? 'profit-plus' : 'profit-minus') : '';
-                const profitRate = d.profitRate != null ? d.profitRate.toFixed(2) + '%' : '-';
-                tbody.innerHTML += `<tr>
-                    <td>${d.stockName}</td><td>${d.broker}</td>
-                    <td class="text-end">${fmt(d.offeringPrice)}</td><td class="text-end">${fmt(d.subscriptionQty)}</td>
-                    <td class="text-end">${fmt(d.allocatedQty)}</td><td class="text-end">${fmt(d.soldQty)}</td>
-                    <td>${d.soldDate || '-'}</td><td class="text-end">${fmt(d.soldPrice)}</td>
-                    <td class="text-end">${fmt(d.taxAndFee)}</td><td class="text-end">${fmt(d.subscriptionFee)}</td>
-                    <td class="text-end ${profitClass}">${fmt(d.profit)}</td>
-                    <td class="text-end ${profitClass}">${profitRate}</td>
-                    <td>
-                        <button class="btn btn-outline-warning btn-sm py-0 px-1" onclick='openEditModal(${JSON.stringify(d)})'>수정</button>
-                        <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="deleteIpo(${d.id})">삭제</button>
-                    </td>
-                </tr>`;
+                const pc = profitClass(d.profit);
+                const profitText = d.profit != null
+                    ? profitSign(d.profit) + fmt(d.profit) + '원'
+                    : '-';
+                const rateText = d.profitRate != null
+                    ? profitSign(d.profitRate) + d.profitRate.toFixed(2) + '%'
+                    : '';
+
+                if (d.profit != null) totalProfit += d.profit;
+
+                const dataStr = JSON.stringify(d).replace(/'/g, '&#39;');
+                html += `<div class="ipo-card">
+  <div class="ipo-card-header">
+    <span class="stock-name">${d.stockName}</span>
+    <div class="card-actions">
+      <button class="btn-edit" onclick='openEditModal(${dataStr})'>수정</button>
+      <button class="btn-del" onclick="deleteIpo(${d.id})">삭제</button>
+    </div>
+  </div>
+  <div class="ipo-card-body">
+    <div class="info-row">
+      <span>🏢 ${d.broker}</span>
+      <span>📅 ${d.soldDate || '미매도'}</span>
+    </div>
+    <div class="info-row">
+      <span>공모가 ${fmt(d.offeringPrice)}원</span>
+      ${d.soldPrice ? `<span>→ 매도가 ${fmt(d.soldPrice)}원</span>` : ''}
+      <span>수량 ${fmt(d.soldQty)}주</span>
+    </div>
+    <div class="info-row">
+      ${d.taxAndFee ? `<span>세금+수수료 ${fmt(d.taxAndFee)}원</span>` : ''}
+      ${d.subscriptionFee ? `<span>청약수수료 ${fmt(d.subscriptionFee)}원</span>` : ''}
+    </div>
+    <div class="profit-row">
+      <span class="profit-val ${pc}">${profitText}</span>
+      ${rateText ? `<span class="profit-rate ${pc}">(${rateText})</span>` : ''}
+    </div>
+  </div>
+</div>`;
             });
+
+            container.innerHTML = html;
+
+            // 합계 표시
+            const tc = profitClass(totalProfit);
+            totalEl.textContent = profitSign(totalProfit) + totalProfit.toLocaleString() + ' 원';
+            totalEl.className = 'amount ' + tc;
         });
     }
 
@@ -264,6 +399,7 @@
         document.getElementById('taxAndFee').value = 0;
         document.getElementById('subscriptionFee').value = 0;
         document.getElementById('soldQty').value = 0;
+        new bootstrap.Modal(document.getElementById('ipoModal')).show();
     }
 
     function openEditModal(d) {
@@ -272,9 +408,7 @@
         document.getElementById('stockName').value = d.stockName;
         document.getElementById('broker').value = d.broker;
         document.getElementById('offeringPrice').value = d.offeringPrice;
-        document.getElementById('subscriptionQty').value = d.subscriptionQty;
-        document.getElementById('allocatedQty').value = d.allocatedQty;
-        document.getElementById('soldQty').value = d.soldQty;
+        document.getElementById('soldQty').value = d.soldQty || 0;
         document.getElementById('soldDate').value = d.soldDate || '';
         document.getElementById('soldPrice').value = d.soldPrice || '';
         document.getElementById('taxAndFee').value = d.taxAndFee || 0;
@@ -288,8 +422,6 @@
             stockName: document.getElementById('stockName').value,
             broker: document.getElementById('broker').value,
             offeringPrice: parseInt(document.getElementById('offeringPrice').value),
-            subscriptionQty: parseInt(document.getElementById('subscriptionQty').value),
-            allocatedQty: parseInt(document.getElementById('allocatedQty').value),
             soldQty: parseInt(document.getElementById('soldQty').value) || 0,
             soldDate: document.getElementById('soldDate').value || null,
             soldPrice: document.getElementById('soldPrice').value ? parseInt(document.getElementById('soldPrice').value) : null,

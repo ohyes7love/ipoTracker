@@ -1,19 +1,9 @@
 package com.ipo.manager.domain;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "BROKER_FEE")
 public class BrokerFee {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false, unique = true)
     private String brokerName;
-
-    @Column(nullable = false)
     private Long feeAmount;
 
     public Long getId() { return id; }

@@ -1,9 +1,14 @@
 package com.ipo.manager.repository;
 
 import com.ipo.manager.domain.BrokerFee;
-import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.Optional;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
-public interface BrokerFeeRepository extends JpaRepository<BrokerFee, Long> {
-    Optional<BrokerFee> findByBrokerName(String brokerName);
+import java.util.List;
+
+@Mapper
+public interface BrokerFeeRepository {
+    List<BrokerFee> findAll();
+    BrokerFee findByBrokerName(@Param("brokerName") String brokerName);
+    void update(BrokerFee fee);
 }

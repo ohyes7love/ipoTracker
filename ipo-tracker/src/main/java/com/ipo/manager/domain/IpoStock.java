@@ -1,19 +1,9 @@
 package com.ipo.manager.domain;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "IPO_STOCK")
 public class IpoStock {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false, unique = true)
     private String stockName;
-
-    @Column(nullable = false)
     private Long offeringPrice;
 
     public Long getId() { return id; }

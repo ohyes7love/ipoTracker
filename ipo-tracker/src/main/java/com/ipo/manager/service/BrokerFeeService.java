@@ -22,9 +22,10 @@ public class BrokerFeeService {
     }
 
     public BrokerFee updateByName(String name, Long feeAmount) {
-        BrokerFee fee = repository.findByBrokerName(name)
-                .orElseThrow(() -> new RuntimeException("Broker not found: " + name));
+        BrokerFee fee = repository.findByBrokerName(name);
+        if (fee == null) throw new RuntimeException("Broker not found: " + name);
         fee.setFeeAmount(feeAmount);
-        return repository.save(fee);
+        repository.update(fee);
+        return fee;
     }
 }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ipo.manager.repository.IpoStockRepository">
+
+    <select id="findAll" resultType="com.ipo.manager.domain.IpoStock">
+        SELECT id, stock_name, offering_price
+        FROM ipo_stock
+        ORDER BY stock_name
+    </select>
+
+    <select id="findByStockName" resultType="com.ipo.manager.domain.IpoStock">
+        SELECT id, stock_name, offering_price
+        FROM ipo_stock
+        WHERE stock_name = #{stockName}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ipo_stock (stock_name, offering_price)
+        VALUES (#{stockName}, #{offeringPrice})
+    </insert>
+
+    <update id="update">
+        UPDATE ipo_stock SET offering_price = #{offeringPrice}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

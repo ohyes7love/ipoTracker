@@ -8,8 +8,6 @@ public class IpoDto {
     private String stockName;
     private String broker;
     private Long offeringPrice;
-    private Integer subscriptionQty;
-    private Integer allocatedQty;
     private Integer soldQty;
     private LocalDate soldDate;
     private Long soldPrice;
@@ -25,8 +23,6 @@ public class IpoDto {
         dto.stockName = entity.getStockName();
         dto.broker = entity.getBroker();
         dto.offeringPrice = entity.getOfferingPrice();
-        dto.subscriptionQty = entity.getSubscriptionQty();
-        dto.allocatedQty = entity.getAllocatedQty();
         dto.soldQty = entity.getSoldQty();
         dto.soldDate = entity.getSoldDate();
         dto.soldPrice = entity.getSoldPrice();
@@ -44,8 +40,6 @@ public class IpoDto {
         entity.setStockName(this.stockName);
         entity.setBroker(this.broker);
         entity.setOfferingPrice(this.offeringPrice);
-        entity.setSubscriptionQty(this.subscriptionQty);
-        entity.setAllocatedQty(this.allocatedQty);
         entity.setSoldQty(this.soldQty != null ? this.soldQty : 0);
         entity.setSoldDate(this.soldDate);
         entity.setSoldPrice(this.soldPrice);
@@ -63,10 +57,6 @@ public class IpoDto {
     public void setBroker(String broker) { this.broker = broker; }
     public Long getOfferingPrice() { return offeringPrice; }
     public void setOfferingPrice(Long offeringPrice) { this.offeringPrice = offeringPrice; }
-    public Integer getSubscriptionQty() { return subscriptionQty; }
-    public void setSubscriptionQty(Integer subscriptionQty) { this.subscriptionQty = subscriptionQty; }
-    public Integer getAllocatedQty() { return allocatedQty; }
-    public void setAllocatedQty(Integer allocatedQty) { this.allocatedQty = allocatedQty; }
     public Integer getSoldQty() { return soldQty; }
     public void setSoldQty(Integer soldQty) { this.soldQty = soldQty; }
     public LocalDate getSoldDate() { return soldDate; }
