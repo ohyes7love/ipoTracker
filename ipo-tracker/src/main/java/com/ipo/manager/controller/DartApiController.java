@@ -16,6 +16,13 @@ public class DartApiController {
         this.dartApiService = dartApiService;
     }
 
+    /** 종목명 자동완성: DART 공시 검색으로 회사명 반환 */
+    @GetMapping("/search")
+    public ResponseEntity<?> search(@RequestParam String q) {
+        // API 키 미설정이면 빈 배열 (오류 없이)
+        return ResponseEntity.ok(dartApiService.searchCorpName(q));
+    }
+
     @GetMapping("/ipos")
     public ResponseEntity<?> getIpos() {
         if (!dartApiService.isConfigured()) {

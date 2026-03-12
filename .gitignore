@@ -1,0 +1,41 @@
+# ──────────────────────────────────────────
+# Spring Boot (ipo-tracker)
+# ──────────────────────────────────────────
+ipo-tracker/build/
+ipo-tracker/bin/
+ipo-tracker/.gradle/
+ipo-tracker/out/
+ipo-tracker/.classpath
+ipo-tracker/.project
+ipo-tracker/.settings/
+ipo-tracker/*.class
+
+# 민감 정보 (API 키, DB 비밀번호)
+ipo-tracker/src/main/resources/application.properties
+
+# ──────────────────────────────────────────
+# Capacitor App (ipo-tracker-app)
+# ──────────────────────────────────────────
+
+# Node
+ipo-tracker-app/node_modules/
+
+# Android 빌드 산출물
+ipo-tracker-app/android/app/build/
+ipo-tracker-app/android/build/
+ipo-tracker-app/android/.gradle/
+ipo-tracker-app/android/local.properties
+ipo-tracker-app/android/capacitor-cordova-android-plugins/
+
+# APK (배포 파일은 별도 관리)
+*.apk
+*.aab
+
+# ──────────────────────────────────────────
+# OS / IDE 공통
+# ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/

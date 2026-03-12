@@ -16,12 +16,24 @@ public class KrxApiController {
         this.krxService = krxService;
     }
 
+    /**
+     * 종목명 자동완성 검색
+     * GET /api/krx/search?query=삼성
+     * → 네이버 금융 API로 국내 전종목 검색
+     */
+    @GetMapping("/search")
+    public ResponseEntity<?> search(@RequestParam String query) {
+        try {
+            return ResponseEntity.ok(krxService.searchStocks(query));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    /** 레거시 호환 - 빈 목록 반환 */
     @GetMapping("/stocks")
     public ResponseEntity<?> getAllStocks() {
-        try {
-            return ResponseEntity.ok(krxService.getAllStocks());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
-        }
+        return ResponseEntity.ok(krxService.getAllStocks());
     }
 }

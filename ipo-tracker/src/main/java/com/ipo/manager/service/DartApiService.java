@@ -5,11 +5,14 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +29,34 @@ public class DartApiService {
 
     public boolean isConfigured() {
         return apiKey != null && !apiKey.isBlank();
+    }
+
+    /**
+     * DART 공시 검색으로 회사명 자동완성
+     * list.json?corp_name=검색어 → corp_name 목록 (중복제거, 최대 10건)
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> searchCorpName(String query) {
+        if (!isConfigured() || query == null || query.isBlank()) return List.of();
+        try {
+            String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
+            String url = "https://opendart.fss.or.kr/api/list.json"
+                    + "?crtfc_key=" + apiKey
+                    + "&corp_name=" + encoded
+                    + "&pblntf_ty=A&page_count=20";
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            if (response == null || !"000".equals(response.get("status"))) return List.of();
+            List<Map<String, Object>> list = (List<Map<String, Object>>) response.get("list");
+            if (list == null) return List.of();
+            return list.stream()
+                    .map(item -> (String) item.get("corp_name"))
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .limit(10)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     @SuppressWarnings("unchecked")
