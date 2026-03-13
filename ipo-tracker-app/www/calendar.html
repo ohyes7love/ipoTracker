@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>캘린더 - 공모주 수익 관리</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #f5f6fa; padding-bottom: 70px; font-size: 14px; margin: 0; font-family: -apple-system, sans-serif; }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: #0d6efd; display: flex; border-top: 1px solid #0b5ed7;
+        }
+        .bottom-nav a {
+            flex: 1; color: rgba(255,255,255,0.7); text-decoration: none;
+            text-align: center; padding: 10px 0; font-size: 12px; line-height: 1.3;
+        }
+        .bottom-nav a.active { color: #fff; font-weight: 700; }
+        .bottom-nav a span { display: block; font-size: 18px; }
+
+        .top-bar {
+            background: #0d6efd; color: #fff; padding: 12px 16px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar h1 { font-size: 16px; margin: 0; font-weight: 700; }
+
+        .cal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; background: #fff; border-bottom: 1px solid #e0e0e0;
+        }
+        .cal-title { font-size: 18px; font-weight: 700; color: #222; }
+        .cal-nav {
+            background: none; border: none; font-size: 22px;
+            color: #0d6efd; padding: 2px 12px; cursor: pointer; line-height: 1;
+        }
+
+        .cal-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            background: #e8e8e8; gap: 1px;
+        }
+        .cal-weekday {
+            text-align: center; padding: 7px 0; font-size: 11px; font-weight: 700;
+            color: #6c757d; background: #fff;
+        }
+        .cal-day {
+            min-height: 70px; padding: 3px 2px;
+            background: #fff; overflow: hidden;     /* 셀 넘침 방지 */
+        }
+        .cal-day.other-month { background: #fafafa; }
+        .cal-day.today .day-num { background: #0d6efd; color: #fff !important; }
+
+        .day-num {
+            font-size: 12px; font-weight: 600; color: #333;
+            width: 22px; height: 22px; display: flex; align-items: center;
+            justify-content: center; border-radius: 50%; margin: 1px auto 2px;
+        }
+
+        /* 이벤트 뱃지 - 텍스트 잘림 처리 */
+        .event {
+            font-size: 10px; font-weight: 600; border-radius: 3px;
+            padding: 1px 3px; margin: 1px 0 0;
+            display: flex; align-items: center; gap: 2px;
+            cursor: pointer; overflow: hidden; width: 100%;
+        }
+        .event-badge { font-size: 9px; font-weight: 800; flex-shrink: 0; }
+        .event-name  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+        .event-sub     { background: #ffe0ec; color: #c0004e; }
+        .event-listing { background: #d0e8ff; color: #003d80; }
+
+        /* 바텀시트 */
+        #infoSheet {
+            display: none; position: fixed; bottom: 56px; left: 0; right: 0; z-index: 500;
+            background: #fff; border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+            max-height: 72vh; overflow-y: auto;
+        }
+        .sheet-hdr {
+            position: sticky; top: 0; background: #fff; z-index: 1;
+            padding: 14px 16px 10px; border-bottom: 1px solid #eee;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .sheet-hdr-left { display: flex; align-items: center; gap: 8px; }
+        .sheet-title { font-size: 16px; font-weight: 700; color: #222; }
+        .sheet-market {
+            font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+            background: #e8f5e9; color: #2e7d32;
+        }
+        .sheet-close { background: none; border: none; font-size: 22px; color: #aaa; cursor: pointer; }
+        .sheet-body { padding: 12px 16px 16px; }
+
+        .info-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .info-cell {
+            padding: 8px 10px; border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f0f0f0;
+        }
+        .info-cell:nth-child(2n) { border-right: none; }
+        .info-cell:nth-last-child(-n+2) { border-bottom: none; }
+        .info-cell-key { font-size: 10px; color: #888; margin-bottom: 2px; }
+        .info-cell-val { font-size: 12px; font-weight: 700; color: #222; }
+        .info-cell-val.red { color: #c0004e; }
+
+        .broker-tit { font-size: 12px; font-weight: 700; color: #444; margin-bottom: 6px; }
+        .broker-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .broker-tbl th { background: #f5f6fa; padding: 6px 8px; text-align: left; border-bottom: 1px solid #e0e0e0; color: #666; font-weight: 600; }
+        .broker-tbl th:not(:first-child) { text-align: right; }
+        .broker-tbl td { padding: 7px 8px; border-bottom: 1px solid #f5f5f5; }
+        .broker-tbl td:not(:first-child) { text-align: right; }
+        .sheet-loading { text-align: center; padding: 24px; color: #aaa; font-size: 13px; }
+
+        /* 오버레이 */
+        #sheetOverlay {
+            display: none; position: fixed; inset: 0; z-index: 499;
+            background: rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar" style="display:flex;align-items:center;justify-content:space-between;">
+    <h1>공모주 캘린더</h1>
+    <button id="refreshBtn" onclick="doRefresh()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:5px 12px;font-size:13px;cursor:pointer;">🔄 동기화</button>
+</div>
+
+<div class="cal-header">
+    <button class="cal-nav" onclick="moveMonth(-1)">‹</button>
+    <span class="cal-title" id="calTitle"></span>
+    <button class="cal-nav" onclick="moveMonth(1)">›</button>
+</div>
+
+<div id="calWrapper"></div>
+
+<!-- 바텀시트 오버레이 -->
+<div id="sheetOverlay" onclick="closeInfo()"></div>
+
+<!-- 종목 상세 바텀시트 -->
+<div id="infoSheet">
+    <div class="sheet-hdr">
+        <div class="sheet-hdr-left">
+            <span id="infoName" class="sheet-title"></span>
+            <span id="infoMarket" class="sheet-market" style="display:none"></span>
+        </div>
+        <button class="sheet-close" onclick="closeInfo()">✕</button>
+    </div>
+    <div class="sheet-body" id="infoBody">
+        <div class="sheet-loading">로딩 중...</div>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="index.html"><span>📊</span>대시보드</a>
+    <a href="ipo.html"><span>📋</span>청약내역</a>
+    <a href="calendar.html" class="active"><span>📅</span>캘린더</a>
+    <a href="broker-fees.html"><span>💰</span>수수료</a>
+</nav>
+
+<script src="js/kokstock.js"></script>
+<script src="js/db.js"></script>
+<script>
+    const todayDate = new Date();
+    let curYear  = todayDate.getFullYear();
+    let curMonth = todayDate.getMonth() + 1;
+    let scheduleMap = {};   // corpName → schedule
+
+    function localDateStr(d) {
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function moveMonth(delta) {
+        curMonth += delta;
+        if (curMonth > 12) { curMonth = 1; curYear++; }
+        if (curMonth < 1)  { curMonth = 12; curYear--; }
+        renderCalendar();
+    }
+
+    const WEEKDAYS = ['월', '화', '수', '목', '금'];
+
+    function buildEventMap(manualItems, kokSchedules, monthStr) {
+        scheduleMap = {};
+        const eventMap = {};
+        const addEvent = (dateStr, name, type) => {
+            if (!eventMap[dateStr]) eventMap[dateStr] = [];
+            if (!eventMap[dateStr].find(e => e.name === name && e.type === type))
+                eventMap[dateStr].push({ name, type });
+        };
+        const items = [
+            ...manualItems.map(i => ({ corpName: i.stockName, subscriptionStartDate: i.subscriptionStartDate, subscriptionEndDate: i.subscriptionEndDate, listingDate: i.listingDate })),
+            ...kokSchedules
+        ];
+        items.forEach(item => {
+            const name = item.corpName || '';
+            if (name) scheduleMap[name] = item;
+            if (item.subscriptionStartDate) {
+                let d = new Date(item.subscriptionStartDate + 'T00:00:00');
+                const endD = new Date((item.subscriptionEndDate || item.subscriptionStartDate) + 'T00:00:00');
+                while (d <= endD) {
+                    const ds = localDateStr(d);
+                    if (ds.startsWith(monthStr)) addEvent(ds, name, 'sub');
+                    d.setDate(d.getDate() + 1);
+                }
+            }
+            if (item.listingDate && item.listingDate.startsWith(monthStr))
+                addEvent(item.listingDate, name, 'listing');
+        });
+        return eventMap;
+    }
+
+    function esc(s) { return s.replace(/'/g, "\\'").replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function buildGrid(eventMap) {
+        const firstDow = (new Date(curYear, curMonth - 1, 1).getDay() + 6) % 7;
+        const startOff = firstDow < 5 ? firstDow : 0;
+        const lastDate = new Date(curYear, curMonth, 0).getDate();
+        const todayStr = localDateStr(todayDate);
+
+        let html = '<div class="cal-grid">';
+        WEEKDAYS.forEach(w => { html += `<div class="cal-weekday">${w}</div>`; });
+        for (let i = 0; i < startOff; i++) html += '<div class="cal-day other-month"></div>';
+
+        for (let d = 1; d <= lastDate; d++) {
+            const date = new Date(curYear, curMonth - 1, d);
+            const dow  = (date.getDay() + 6) % 7;
+            if (dow >= 5) continue;
+
+            const ds  = localDateStr(date);
+            let cls   = 'cal-day' + (ds === todayStr ? ' today' : '');
+
+            const evs = (eventMap[ds] || []).slice(0, 3); // 최대 3개
+            const evHtml = evs.map(e => {
+                const badge = e.type === 'sub' ? '청' : '상';
+                const ecls  = e.type === 'sub' ? 'event-sub' : 'event-listing';
+                return `<div class="event ${ecls}" onclick="showInfo('${esc(e.name)}')"><span class="event-badge">${badge}</span><span class="event-name">${e.name}</span></div>`;
+            }).join('');
+            html += `<div class="${cls}"><div class="day-num">${d}</div>${evHtml}</div>`;
+        }
+        html += '</div>';
+        document.getElementById('calWrapper').innerHTML = html;
+    }
+
+    async function renderCalendar() {
+        document.getElementById('calTitle').textContent =
+            curYear + '.' + String(curMonth).padStart(2,'0');
+        const monthStr = curYear + '-' + String(curMonth).padStart(2,'0');
+
+        const manualItems = await getAllIpos();
+        buildGrid(buildEventMap(manualItems, [], monthStr));
+
+        getKokstockSchedulesByMonth(curYear, curMonth)
+            .then(sched => { buildGrid(buildEventMap(manualItems, sched, monthStr)); })
+            .catch(e => console.warn('kokstock error', e));
+    }
+
+    // ── 상세 바텀시트 ──────────────────────────────────────
+
+    function showInfo(name) {
+        const s = scheduleMap[name] || {};
+        document.getElementById('infoName').textContent = name;
+        const mEl = document.getElementById('infoMarket');
+        mEl.style.display = 'none';
+        document.getElementById('infoBody').innerHTML = '<div class="sheet-loading">로딩 중...</div>';
+        document.getElementById('infoSheet').style.display = 'block';
+        document.getElementById('sheetOverlay').style.display = 'block';
+
+        if (s.idx) {
+            getKokstockDetail(s.idx).then(d => {
+                if (d.market) { mEl.textContent = d.market; mEl.style.display = 'inline'; }
+                document.getElementById('infoBody').innerHTML = renderDetailHtml(d);
+            }).catch(() => {
+                document.getElementById('infoBody').innerHTML = renderBasicHtml(s);
+            });
+        } else {
+            document.getElementById('infoBody').innerHTML = renderBasicHtml(s);
+        }
+    }
+
+    function closeInfo() {
+        document.getElementById('infoSheet').style.display = 'none';
+        document.getElementById('sheetOverlay').style.display = 'none';
+    }
+
+    function infoCell(key, val, red) {
+        return `<div class="info-cell"><div class="info-cell-key">${key}</div><div class="info-cell-val${red?' red':''}">${val || '-'}</div></div>`;
+    }
+
+    function renderBasicHtml(s) {
+        const sub = s.subscriptionStartDate
+            ? s.subscriptionStartDate.slice(5) + (s.subscriptionEndDate && s.subscriptionEndDate !== s.subscriptionStartDate ? ' ~ ' + s.subscriptionEndDate.slice(5) : '')
+            : '-';
+        return `<div class="info-grid">${infoCell('청약기간', sub)}${infoCell('상장일', s.listingDate ? s.listingDate.slice(5) : '-')}</div>`;
+    }
+
+    function renderDetailHtml(d) {
+        const info = d.info || {};
+        const fields = [
+            ['청약일정', false], ['환불일', false],
+            ['희망공모가', false], ['확정공모가', true],
+            ['희망공모금액', false], ['확정공모금액', false],
+            ['의무확약비율', false], ['기관경쟁률', true],
+            ['상장일', false], ['청약경쟁률', true]
+        ];
+        const cells = fields.map(([k, red]) => infoCell(k, info[k], red)).join('');
+
+        let brokersHtml = '';
+        if (d.brokers && d.brokers.length > 0) {
+            const rows = d.brokers.map(b =>
+                `<tr><td>${b.name}</td><td>${b.allocation}</td><td>${b.limit}</td></tr>`
+            ).join('');
+            brokersHtml = `
+                <div class="broker-tit">증권사</div>
+                <table class="broker-tbl">
+                    <tr><th>증권사</th><th>배정물량(주)</th><th>청약한도(주)</th></tr>
+                    ${rows}
+                </table>`;
+        }
+        return `<div class="info-grid">${cells}</div>${brokersHtml}`;
+    }
+
+    async function doRefresh() {
+        const btn = document.getElementById('refreshBtn');
+        btn.textContent = '⏳ 로딩중...';
+        btn.disabled = true;
+        try {
+            await refreshKokstockCache();
+            await renderCalendar();
+            btn.textContent = '✅ 완료';
+        } catch (e) {
+            btn.textContent = '❌ 실패';
+        }
+        setTimeout(() => { btn.textContent = '🔄 동기화'; btn.disabled = false; }, 2000);
+    }
+
+    renderCalendar();
+</script>
+</body>
+</html>

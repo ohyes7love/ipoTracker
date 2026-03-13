@@ -16,6 +16,9 @@ public class IpoDto {
     private Long profit;
     private Double profitRate;
     private Integer year;
+    private LocalDate subscriptionStartDate;
+    private LocalDate subscriptionEndDate;
+    private LocalDate listingDate;
 
     public static IpoDto from(IpoSubscription entity) {
         IpoDto dto = new IpoDto();
@@ -31,6 +34,9 @@ public class IpoDto {
         dto.profit = entity.getProfit();
         dto.profitRate = entity.getProfitRate();
         dto.year = entity.getYear();
+        dto.subscriptionStartDate = entity.getSubscriptionStartDate();
+        dto.subscriptionEndDate   = entity.getSubscriptionEndDate();
+        dto.listingDate           = entity.getListingDate();
         return dto;
     }
 
@@ -46,6 +52,9 @@ public class IpoDto {
         entity.setTaxAndFee(this.taxAndFee != null ? this.taxAndFee : 0L);
         entity.setSubscriptionFee(this.subscriptionFee != null ? this.subscriptionFee : 0L);
         entity.setYear(this.year);
+        entity.setSubscriptionStartDate(this.subscriptionStartDate);
+        entity.setSubscriptionEndDate(this.subscriptionEndDate);
+        entity.setListingDate(this.listingDate);
         return entity;
     }
 
@@ -73,4 +82,10 @@ public class IpoDto {
     public void setProfitRate(Double profitRate) { this.profitRate = profitRate; }
     public Integer getYear() { return year; }
     public void setYear(Integer year) { this.year = year; }
+    public LocalDate getSubscriptionStartDate() { return subscriptionStartDate; }
+    public void setSubscriptionStartDate(LocalDate subscriptionStartDate) { this.subscriptionStartDate = subscriptionStartDate; }
+    public LocalDate getSubscriptionEndDate() { return subscriptionEndDate; }
+    public void setSubscriptionEndDate(LocalDate subscriptionEndDate) { this.subscriptionEndDate = subscriptionEndDate; }
+    public LocalDate getListingDate() { return listingDate; }
+    public void setListingDate(LocalDate listingDate) { this.listingDate = listingDate; }
 }

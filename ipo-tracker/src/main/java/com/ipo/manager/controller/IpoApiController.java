@@ -19,6 +19,11 @@ public class IpoApiController {
         this.ipoService = ipoService;
     }
 
+    @GetMapping("/all")
+    public List<IpoDto> all() {
+        return ipoService.getAll();
+    }
+
     @GetMapping
     public List<IpoDto> list(@RequestParam int year) {
         return ipoService.getByYear(year);

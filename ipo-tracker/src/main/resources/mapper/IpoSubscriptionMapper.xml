@@ -4,21 +4,33 @@
 <mapper namespace="com.ipo.manager.repository.IpoSubscriptionRepository">
 
     <resultMap id="ipoResultMap" type="com.ipo.manager.domain.IpoSubscription">
-        <id     property="id"              column="id"/>
-        <result property="stockName"       column="stock_name"/>
-        <result property="broker"          column="broker"/>
-        <result property="offeringPrice"   column="offering_price"/>
-        <result property="soldQty"         column="sold_qty"/>
-        <result property="soldDate"        column="sold_date"/>
-        <result property="soldPrice"       column="sold_price"/>
-        <result property="taxAndFee"       column="tax_and_fee"/>
-        <result property="subscriptionFee" column="subscription_fee"/>
-        <result property="year"            column="subscription_year"/>
+        <id     property="id"                    column="id"/>
+        <result property="stockName"             column="stock_name"/>
+        <result property="broker"                column="broker"/>
+        <result property="offeringPrice"         column="offering_price"/>
+        <result property="soldQty"               column="sold_qty"/>
+        <result property="soldDate"              column="sold_date"/>
+        <result property="soldPrice"             column="sold_price"/>
+        <result property="taxAndFee"             column="tax_and_fee"/>
+        <result property="subscriptionFee"       column="subscription_fee"/>
+        <result property="year"                  column="subscription_year"/>
+        <result property="subscriptionStartDate" column="subscription_start_date"/>
+        <result property="subscriptionEndDate"   column="subscription_end_date"/>
+        <result property="listingDate"           column="listing_date"/>
     </resultMap>
+
+    <select id="findAll" resultMap="ipoResultMap">
+        SELECT id, stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
+               tax_and_fee, subscription_fee, subscription_year,
+               subscription_start_date, subscription_end_date, listing_date
+        FROM ipo_subscription
+        ORDER BY id DESC
+    </select>
 
     <select id="findByYear" resultMap="ipoResultMap">
         SELECT id, stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
-               tax_and_fee, subscription_fee, subscription_year
+               tax_and_fee, subscription_fee, subscription_year,
+               subscription_start_date, subscription_end_date, listing_date
         FROM ipo_subscription
         WHERE subscription_year = #{year}
         ORDER BY id DESC
@@ -26,7 +38,8 @@
 
     <select id="findByYearWithSoldDate" resultMap="ipoResultMap">
         SELECT id, stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
-               tax_and_fee, subscription_fee, subscription_year
+               tax_and_fee, subscription_fee, subscription_year,
+               subscription_start_date, subscription_end_date, listing_date
         FROM ipo_subscription
         WHERE subscription_year = #{year}
           AND sold_date IS NOT NULL
@@ -34,7 +47,8 @@
 
     <select id="findById" resultMap="ipoResultMap">
         SELECT id, stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
-               tax_and_fee, subscription_fee, subscription_year
+               tax_and_fee, subscription_fee, subscription_year,
+               subscription_start_date, subscription_end_date, listing_date
         FROM ipo_subscription
         WHERE id = #{id}
     </select>
@@ -42,23 +56,28 @@
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO ipo_subscription
             (stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
-             tax_and_fee, subscription_fee, subscription_year)
+             tax_and_fee, subscription_fee, subscription_year,
+             subscription_start_date, subscription_end_date, listing_date)
         VALUES
             (#{stockName}, #{broker}, #{offeringPrice}, #{soldQty}, #{soldDate}, #{soldPrice},
-             #{taxAndFee}, #{subscriptionFee}, #{year})
+             #{taxAndFee}, #{subscriptionFee}, #{year},
+             #{subscriptionStartDate}, #{subscriptionEndDate}, #{listingDate})
     </insert>
 
     <update id="update">
         UPDATE ipo_subscription SET
-            stock_name       = #{stockName},
-            broker           = #{broker},
-            offering_price   = #{offeringPrice},
-            sold_qty         = #{soldQty},
-            sold_date        = #{soldDate},
-            sold_price       = #{soldPrice},
-            tax_and_fee      = #{taxAndFee},
-            subscription_fee = #{subscriptionFee},
-            subscription_year = #{year}
+            stock_name              = #{stockName},
+            broker                  = #{broker},
+            offering_price          = #{offeringPrice},
+            sold_qty                = #{soldQty},
+            sold_date               = #{soldDate},
+            sold_price              = #{soldPrice},
+            tax_and_fee             = #{taxAndFee},
+            subscription_fee        = #{subscriptionFee},
+            subscription_year       = #{year},
+            subscription_start_date = #{subscriptionStartDate},
+            subscription_end_date   = #{subscriptionEndDate},
+            listing_date            = #{listingDate}
         WHERE id = #{id}
     </update>
 

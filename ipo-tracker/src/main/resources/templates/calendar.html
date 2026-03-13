@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>캘린더 - 공모주 수익 관리</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f6fa; padding-bottom: 70px; font-size: 14px; margin: 0; }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: #0d6efd; display: flex; border-top: 1px solid #0b5ed7;
+        }
+        .bottom-nav a {
+            flex: 1; color: rgba(255,255,255,0.7); text-decoration: none;
+            text-align: center; padding: 10px 0; font-size: 12px; line-height: 1.3;
+        }
+        .bottom-nav a.active { color: #fff; font-weight: 700; }
+        .bottom-nav a span { display: block; font-size: 18px; }
+
+        .top-bar {
+            background: #0d6efd; color: #fff; padding: 12px 16px;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar h1 { font-size: 16px; margin: 0; font-weight: 700; }
+
+        .cal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; background: #fff; border-bottom: 1px solid #e0e0e0;
+        }
+        .cal-title { font-size: 18px; font-weight: 700; color: #222; }
+        .cal-nav {
+            background: none; border: none; font-size: 22px;
+            color: #0d6efd; padding: 2px 12px; cursor: pointer; line-height: 1;
+        }
+        .sync-btn {
+            background: none; border: 1px solid #dee2e6; border-radius: 6px;
+            font-size: 13px; color: #6c757d; padding: 3px 10px; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .sync-btn:disabled { opacity: 0.5; cursor: default; }
+        .sync-btn.spinning { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .cal-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            background: #fff;
+        }
+        .cal-weekday {
+            text-align: center; padding: 7px 0; font-size: 11px; font-weight: 700;
+            color: #6c757d; border-bottom: 1px solid #e0e0e0;
+            border-right: 1px solid #f0f0f0;
+        }
+        .cal-weekday:last-child { border-right: none; }
+
+        .cal-day {
+            min-height: 74px; padding: 3px 2px;
+            border-right: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0;
+            background: #fff;
+        }
+        .cal-day:nth-child(5n) { border-right: none; }
+        .cal-day.other-month { background: #fafafa; }
+
+        .day-num {
+            font-size: 12px; font-weight: 600; color: #333;
+            width: 22px; height: 22px; display: flex; align-items: center;
+            justify-content: center; border-radius: 50%; margin: 1px auto 2px;
+        }
+        .cal-day.today .day-num { background: #0d6efd; color: #fff; }
+        .cal-day.other-month .day-num { color: #ccc; }
+
+        .event {
+            font-size: 10px; font-weight: 600; border-radius: 3px;
+            padding: 1px 3px; margin: 1px 1px 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: flex; align-items: center; gap: 2px; max-width: 100%;
+        }
+        .event-sub     { background: #ffe0ec; color: #c0004e; }
+        .event-listing { background: #d0e8ff; color: #003d80; }
+        .event-badge   { font-size: 9px; font-weight: 800; flex-shrink: 0; }
+        .event { cursor: pointer; }
+        .event:active { opacity: 0.7; }
+
+        /* 종목 정보 바텀시트 */
+        #infoSheet {
+            display: none; position: fixed; bottom: 56px; left: 0; right: 0; z-index: 500;
+            background: #fff; border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.18);
+            max-height: 70vh; overflow-y: auto;
+        }
+        #infoSheet .sheet-header {
+            position: sticky; top: 0; background: #fff; z-index: 1;
+            padding: 14px 16px 10px; border-bottom: 1px solid #eee;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        #infoSheet .sheet-title { font-size: 16px; font-weight: 700; color: #222; }
+        #infoSheet .sheet-market {
+            font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+            background: #e8f5e9; color: #2e7d32; margin-left: 6px;
+        }
+        #infoSheet .close-btn {
+            background: none; border: none; font-size: 20px;
+            color: #aaa; cursor: pointer; line-height: 1; padding: 0;
+        }
+        #infoSheet .sheet-body { padding: 12px 16px 16px; }
+        #infoSheet .info-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 0; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;
+            margin-bottom: 12px;
+        }
+        #infoSheet .info-cell {
+            display: flex; align-items: baseline; padding: 8px 10px;
+            border-bottom: 1px solid #f0f0f0; border-right: 1px solid #f0f0f0;
+        }
+        #infoSheet .info-cell:nth-child(2n) { border-right: none; }
+        #infoSheet .info-cell:nth-last-child(-n+2) { border-bottom: none; }
+        #infoSheet .info-key { font-size: 11px; color: #888; min-width: 60px; flex-shrink: 0; }
+        #infoSheet .info-val { font-size: 12px; color: #222; font-weight: 600; }
+        #infoSheet .info-val.highlight { color: #c0004e; }
+        #infoSheet .broker-title { font-size: 12px; font-weight: 700; color: #444; margin-bottom: 6px; }
+        #infoSheet .broker-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        #infoSheet .broker-table th {
+            background: #f5f6fa; padding: 6px 8px; text-align: center;
+            border-bottom: 1px solid #e0e0e0; color: #666; font-weight: 600;
+        }
+        #infoSheet .broker-table td {
+            padding: 7px 8px; text-align: center;
+            border-bottom: 1px solid #f5f5f5; color: #333;
+        }
+        #infoSheet .loading { text-align: center; padding: 24px; color: #aaa; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>공모주 캘린더</h1>
+</div>
+
+<div class="cal-header">
+    <button class="cal-nav" onclick="moveMonth(-1)">‹</button>
+    <div style="text-align:center">
+        <span class="cal-title" id="calTitle"></span>
+        <div id="dartStatus" style="font-size:10px;margin-top:1px"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+        <button class="sync-btn" id="syncBtn" onclick="syncData()" title="데이터 동기화">
+            <span id="syncIcon">↺</span>
+        </button>
+        <button class="cal-nav" onclick="moveMonth(1)">›</button>
+    </div>
+</div>
+
+<div id="calWrapper"></div>
+
+<!-- 종목 정보 바텀시트 -->
+<div id="infoSheet">
+    <div class="sheet-header">
+        <div>
+            <span id="infoName" class="sheet-title"></span>
+            <span id="infoMarket" class="sheet-market" style="display:none"></span>
+        </div>
+        <button class="close-btn" onclick="closeInfo()">✕</button>
+    </div>
+    <div class="sheet-body" id="sheetBody">
+        <div class="loading">로딩 중...</div>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="/"><span>📊</span>대시보드</a>
+    <a href="/ipo"><span>📋</span>청약내역</a>
+    <a href="/calendar" class="active"><span>📅</span>캘린더</a>
+    <a href="/broker-fees"><span>💰</span>수수료</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const todayDate = new Date();
+    let curYear  = todayDate.getFullYear() < 2026 ? 2026 : todayDate.getFullYear();
+    let curMonth = todayDate.getMonth() + 1;
+
+    function moveMonth(delta) {
+        curMonth += delta;
+        if (curMonth > 12) { curMonth = 1; curYear++; }
+        if (curMonth < 1)  { curMonth = 12; curYear--; }
+        renderCalendar();
+    }
+
+    const WEEKDAYS = ['월', '화', '수', '목', '금'];
+
+    // 로컬 날짜 문자열 "YYYY-MM-DD" 반환 (toISOString은 UTC 변환으로 시간대 오류 발생)
+    function localDateStr(d) {
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    const todayStr = localDateStr(todayDate);
+
+    // 종목 정보 조회용: name → schedule 객체
+    let scheduleMap = {};
+
+    function buildEventMap(all, dartSchedules, monthStr) {
+        const eventMap = {};
+        const addEvent = (dateStr, name, type) => {
+            if (!eventMap[dateStr]) eventMap[dateStr] = [];
+            if (!eventMap[dateStr].find(e => e.name === name && e.type === type))
+                eventMap[dateStr].push({ name, type });
+        };
+        [...all.map(i => ({ ...i, corpName: i.stockName })), ...dartSchedules].forEach(item => {
+            const name = item.corpName || item.stockName || '';
+            scheduleMap[name] = item; // 종목 정보 저장
+            if (item.subscriptionStartDate) {
+                // 로컬 날짜 파싱 (UTC 변환 방지: 'T00:00:00' 없이 파싱 시 UTC로 해석되는 브라우저 대응)
+                const [sy, sm, sd] = item.subscriptionStartDate.split('-').map(Number);
+                const [ey, em, ed] = (item.subscriptionEndDate || item.subscriptionStartDate).split('-').map(Number);
+                let cur = new Date(sy, sm-1, sd);
+                const end = new Date(ey, em-1, ed);
+                while (cur <= end) {
+                    const ds = localDateStr(cur);
+                    if (ds.startsWith(monthStr)) addEvent(ds, name, 'sub');
+                    cur.setDate(cur.getDate() + 1);
+                }
+            }
+            if (item.listingDate && item.listingDate.startsWith(monthStr)) {
+                addEvent(item.listingDate, name, 'listing');
+            }
+        });
+        return eventMap;
+    }
+
+    function buildGrid(eventMap) {
+        const firstDow = new Date(curYear, curMonth - 1, 1).getDay(); // 0=일,1=월,...6=토
+        // 월(1)→0칸, 화(2)→1칸, 수(3)→2칸, 목(4)→3칸, 금(5)→4칸, 토/일→0칸
+        const startOff = (firstDow >= 1 && firstDow <= 5) ? firstDow - 1 : 0;
+        const lastDate = new Date(curYear, curMonth, 0).getDate();
+        let html = '<div class="cal-grid">';
+        WEEKDAYS.forEach(w => { html += `<div class="cal-weekday">${w}</div>`; });
+        let cellCount = startOff;
+        for (let i = 0; i < startOff; i++) html += '<div class="cal-day other-month"></div>';
+        for (let d = 1; d <= lastDate; d++) {
+            const dow = new Date(curYear, curMonth - 1, d).getDay();
+            if (dow === 0 || dow === 6) continue; // 토/일 제외
+            const ds  = curYear + '-' + String(curMonth).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            let cls = 'cal-day';
+            if (ds === todayStr) cls += ' today';
+            const evHtml = (eventMap[ds] || []).map(e => {
+                const esc = e.name.replace(/'/g, "\\'");
+                if (e.type === 'sub')     return `<div class="event event-sub" onclick="showInfo('${esc}')"><span class="event-badge">청</span><span>${e.name}</span></div>`;
+                if (e.type === 'listing') return `<div class="event event-listing" onclick="showInfo('${esc}')"><span class="event-badge">상</span><span>${e.name}</span></div>`;
+                return '';
+            }).join('');
+            html += `<div class="${cls}"><div class="day-num">${d}</div>${evHtml}</div>`;
+            cellCount++;
+        }
+        const remain = cellCount % 5;
+        if (remain > 0) for (let i = 0; i < 5 - remain; i++) html += '<div class="cal-day other-month"></div>';
+        html += '</div>';
+        document.getElementById('calWrapper').innerHTML = html;
+    }
+
+    function showInfo(name) {
+        const s = scheduleMap[name] || {};
+        document.getElementById('infoName').textContent = name;
+        const marketEl = document.getElementById('infoMarket');
+        marketEl.style.display = 'none';
+        document.getElementById('sheetBody').innerHTML = '<div class="loading">로딩 중...</div>';
+        document.getElementById('infoSheet').style.display = 'block';
+
+        if (!s.idx) {
+            renderBasicInfo(s);
+            return;
+        }
+
+        fetch('/api/dart/ipo-detail?idx=' + s.idx)
+            .then(r => r.json())
+            .then(d => {
+                if (d.market) { marketEl.textContent = d.market; marketEl.style.display = 'inline'; }
+                renderDetailInfo(d);
+            })
+            .catch(() => renderBasicInfo(s));
+    }
+
+    function renderBasicInfo(s) {
+        const sub = s.subscriptionStartDate
+            ? s.subscriptionStartDate + (s.subscriptionEndDate && s.subscriptionEndDate !== s.subscriptionStartDate ? ' ~ ' + s.subscriptionEndDate : '')
+            : '-';
+        document.getElementById('sheetBody').innerHTML = `
+            <div class="info-grid">
+                <div class="info-cell"><span class="info-key">청약기간</span><span class="info-val">${sub}</span></div>
+                <div class="info-cell"><span class="info-key">상장일</span><span class="info-val">${s.listingDate || '-'}</span></div>
+            </div>`;
+    }
+
+    function renderDetailInfo(d) {
+        const info = d.info || {};
+        // 표시할 항목 순서
+        const fields = ['청약일정','환불일','희망공모가','확정공모가','희망공모금액','확정공모금액','의무확약비율','기관경쟁률','상장일','청약경쟁률'];
+        const cells = fields.map(k => {
+            const val = info[k] || '-';
+            const hi = (k === '확정공모가' || k === '청약경쟁률' || k === '기관경쟁률') ? ' highlight' : '';
+            return `<div class="info-cell"><span class="info-key">${k}</span><span class="info-val${hi}">${val}</span></div>`;
+        }).join('');
+
+        let brokersHtml = '';
+        if (d.brokers && d.brokers.length > 0) {
+            const rows = d.brokers.map(b =>
+                `<tr><td>${b.name}</td><td>${b.allocation}</td><td>${b.limit}</td></tr>`
+            ).join('');
+            brokersHtml = `
+                <div class="broker-title">증권사</div>
+                <table class="broker-table">
+                    <tr><th>증권사</th><th>배정물량(주)</th><th>청약한도(주)</th></tr>
+                    ${rows}
+                </table>`;
+        }
+
+        document.getElementById('sheetBody').innerHTML = `
+            <div class="info-grid">${cells}</div>
+            ${brokersHtml}`;
+    }
+
+    function closeInfo() {
+        document.getElementById('infoSheet').style.display = 'none';
+    }
+
+    async function renderCalendar() {
+        document.getElementById('calTitle').textContent =
+            curYear + '.' + String(curMonth).padStart(2, '0');
+        const monthStr = curYear + '-' + String(curMonth).padStart(2, '0');
+
+        closeInfo();
+        setDartStatus('loading');
+
+        // 1단계: 수동 데이터로 즉시 렌더
+        const all = await fetch('/api/ipo/all').then(r => r.json()).catch(() => []);
+        buildGrid(buildEventMap(all, [], monthStr));
+
+        // 2단계: DART 일정 백그라운드 로드 후 업데이트
+        try {
+            const dartSchedules = await fetch(`/api/dart/calendar?year=${curYear}&month=${curMonth}`)
+                .then(r => r.json());
+            buildGrid(buildEventMap(all, dartSchedules, monthStr));
+            setDartStatus(dartSchedules.length > 0 ? 'ok' : 'empty');
+        } catch (e) {
+            setDartStatus('error');
+            console.error('[DART] calendar error', e);
+        }
+    }
+
+    function setDartStatus(state) {
+        const el = document.getElementById('dartStatus');
+        if (!el) return;
+        if (state === 'loading') { el.style.display = 'none'; }
+        else if (state === 'ok')  { el.style.display = 'none'; }
+        else if (state === 'empty') { el.style.display = 'none'; }
+        else { el.textContent = '데이터 오류'; el.style.color = '#dc3545'; el.style.display = 'block'; }
+    }
+
+    async function syncData() {
+        const btn  = document.getElementById('syncBtn');
+        const icon = document.getElementById('syncIcon');
+        btn.disabled = true;
+        icon.style.display = 'inline-block';
+        icon.style.animation = 'spin 0.8s linear infinite';
+        try {
+            const res = await fetch('/api/dart/refresh', { method: 'POST' });
+            const d   = await res.json();
+            if (d.status === 'ok') {
+                icon.style.animation = '';
+                icon.textContent = '✓';
+                icon.style.color = '#28a745';
+                setTimeout(() => { icon.textContent = '↺'; icon.style.color = ''; }, 1500);
+                await renderCalendar();
+            } else {
+                icon.style.animation = '';
+                icon.textContent = '✕';
+                icon.style.color = '#dc3545';
+                setTimeout(() => { icon.textContent = '↺'; icon.style.color = ''; }, 2000);
+            }
+        } catch (e) {
+            icon.style.animation = '';
+            icon.textContent = '✕';
+            icon.style.color  = '#dc3545';
+            setTimeout(() => { icon.textContent = '↺'; icon.style.color = ''; }, 2000);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    renderCalendar();
+</script>
+</body>
+</html>

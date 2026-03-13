@@ -14,6 +14,9 @@ public class IpoSubscription {
     private Long taxAndFee = 0L;
     private Long subscriptionFee = 0L;
     private Integer year;
+    private LocalDate subscriptionStartDate;
+    private LocalDate subscriptionEndDate;
+    private LocalDate listingDate;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -44,6 +47,15 @@ public class IpoSubscription {
 
     public Integer getYear() { return year; }
     public void setYear(Integer year) { this.year = year; }
+
+    public LocalDate getSubscriptionStartDate() { return subscriptionStartDate; }
+    public void setSubscriptionStartDate(LocalDate subscriptionStartDate) { this.subscriptionStartDate = subscriptionStartDate; }
+
+    public LocalDate getSubscriptionEndDate() { return subscriptionEndDate; }
+    public void setSubscriptionEndDate(LocalDate subscriptionEndDate) { this.subscriptionEndDate = subscriptionEndDate; }
+
+    public LocalDate getListingDate() { return listingDate; }
+    public void setListingDate(LocalDate listingDate) { this.listingDate = listingDate; }
 
     public Long getProfit() {
         if (soldPrice == null) return null;

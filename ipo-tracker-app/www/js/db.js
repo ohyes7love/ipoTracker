@@ -146,6 +146,11 @@ async function getMonthlySummary(year) {
         .map(([month, totalProfit]) => ({ month: parseInt(month), totalProfit }));
 }
 
+async function getAllIpos() {
+    const db = await openDB();
+    return req2p(db.transaction('ipo_subscription', 'readonly').objectStore('ipo_subscription').getAll());
+}
+
 // ── IPO Stock (자동완성용) ────────────────────────────────
 async function getAllIpoStocks() {
     const db = await openDB();
@@ -178,18 +183,108 @@ function setDartApiKey(key) {
     localStorage.setItem('dartApiKey', key.trim());
 }
 
-async function searchDartCorpName(query) {
+// 캐시: 하루 1회만 DART 호출
+// _dartFilingsCache: [{ corpName, receiptDate }] (YYYYMMDD)
+let _dartFilingsCache = null;
+let _dartCacheDate = null;
+
+async function _getDartFilingsCache() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (_dartFilingsCache && _dartCacheDate === today) return _dartFilingsCache;
+
     const key = getDartApiKey();
-    if (!key || !query) return [];
-    try {
-        const url = 'https://opendart.fss.or.kr/api/list.json'
-            + '?crtfc_key=' + encodeURIComponent(key)
-            + '&corp_name=' + encodeURIComponent(query)
-            + '&pblntf_ty=A&page_count=20';
-        const r    = await fetch(url);
+    if (!key) return [];
+
+    const now = new Date();
+    const end = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const bgnDate = new Date(now);
+    bgnDate.setMonth(bgnDate.getMonth() - 3);
+    const bgn = bgnDate.toISOString().slice(0, 10).replace(/-/g, '');
+
+    const baseUrl = 'https://opendart.fss.or.kr/api/list.json'
+        + '?crtfc_key=' + encodeURIComponent(key)
+        + '&bgn_de=' + bgn
+        + '&end_de=' + end
+        + '&pblntf_ty=C&page_count=100';
+
+    const allItems = [];
+    let pageNo = 1;
+    while (true) {
+        const r    = await fetch(baseUrl + '&page_no=' + pageNo);
         const data = await r.json();
-        if (!data || data.status !== '000' || !data.list) return [];
-        return [...new Set(data.list.map(i => i.corp_name).filter(Boolean))].slice(0, 10);
+        if (!data || data.status !== '000' || !data.list || data.list.length === 0) break;
+        allItems.push(...data.list);
+        const totalCount = parseInt(data.total_count || '0', 10);
+        if (allItems.length >= totalCount) break;
+        pageNo++;
+    }
+
+    _dartFilingsCache = allItems
+        .filter(i => i.report_nm && i.report_nm.includes('지분증권') && i.corp_name)
+        .map(i => ({ corpName: i.corp_name, receiptDate: i.rcept_dt || '', rceptNo: i.rcept_no || '' }));
+    _dartCacheDate = today;
+    return _dartFilingsCache;
+}
+
+async function searchDartCorpName(query) {
+    if (!getDartApiKey() || !query) return [];
+    try {
+        const cache = await _getDartFilingsCache();
+        const names = [...new Set(cache.map(f => f.corpName))];
+        return names.filter(name => name.includes(query)).slice(0, 10);
+    } catch {
+        return [];
+    }
+}
+
+// ipo1.json 결과 캐시: rceptNo → { corpName, subscriptionStartDate, subscriptionEndDate, listingDate }
+let _ipoScheduleCache = {};
+let _ipoScheduleCacheDate = null;
+
+async function getDartIpoSchedulesByMonth(year, month) {
+    if (!getDartApiKey()) return [];
+    try {
+        const today = new Date().toISOString().slice(0, 10);
+        if (_ipoScheduleCacheDate !== today) {
+            _ipoScheduleCache = {};
+            _ipoScheduleCacheDate = today;
+        }
+
+        const filings = await _getDartFilingsCache();
+        const key = getDartApiKey();
+
+        // 아직 캐시에 없는 filing만 ipo1.json 병렬 호출
+        const missing = filings.filter(f => f.rceptNo && !_ipoScheduleCache.hasOwnProperty(f.rceptNo));
+        await Promise.all(missing.map(async f => {
+            try {
+                const url = 'https://opendart.fss.or.kr/api/ipo1.json'
+                    + '?crtfc_key=' + encodeURIComponent(key)
+                    + '&rcept_no=' + encodeURIComponent(f.rceptNo);
+                const r = await fetch(url);
+                const data = await r.json();
+                if (!data || data.status !== '000') { _ipoScheduleCache[f.rceptNo] = null; return; }
+
+                const toDate = s => (s && s.length === 8)
+                    ? s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8) : null;
+
+                _ipoScheduleCache[f.rceptNo] = {
+                    corpName:              f.corpName,
+                    subscriptionStartDate: toDate(data.subscr_sttd),
+                    subscriptionEndDate:   toDate(data.subscr_end_d),
+                    listingDate:           toDate(data.lstg_dt)
+                };
+            } catch {
+                _ipoScheduleCache[f.rceptNo] = null;
+            }
+        }));
+
+        const yearMonth = String(year) + '-' + String(month).padStart(2, '0');
+        return Object.values(_ipoScheduleCache).filter(s => {
+            if (!s) return false;
+            return (s.subscriptionStartDate && s.subscriptionStartDate.startsWith(yearMonth))
+                || (s.subscriptionEndDate   && s.subscriptionEndDate.startsWith(yearMonth))
+                || (s.listingDate           && s.listingDate.startsWith(yearMonth));
+        });
     } catch {
         return [];
     }

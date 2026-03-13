@@ -8,6 +8,7 @@ import java.util.List;
 
 @Mapper
 public interface IpoSubscriptionRepository {
+    List<IpoSubscription> findAll();
     List<IpoSubscription> findByYear(@Param("year") int year);
     List<IpoSubscription> findByYearWithSoldDate(@Param("year") int year);
     IpoSubscription findById(@Param("id") Long id);

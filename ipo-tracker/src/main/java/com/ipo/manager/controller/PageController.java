@@ -20,4 +20,9 @@ public class PageController {
     public String brokerFees() {
         return "broker-fees";
     }
+
+    @GetMapping("/calendar")
+    public String calendar() {
+        return "calendar";
+    }
 }

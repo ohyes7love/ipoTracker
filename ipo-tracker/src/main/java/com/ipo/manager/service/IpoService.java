@@ -26,6 +26,11 @@ public class IpoService {
         this.stockRepository = stockRepository;
     }
 
+    public List<IpoDto> getAll() {
+        return repository.findAll()
+                .stream().map(IpoDto::from).collect(Collectors.toList());
+    }
+
     public List<IpoDto> getByYear(int year) {
         return repository.findByYear(year)
                 .stream().map(IpoDto::from).collect(Collectors.toList());
@@ -50,6 +55,9 @@ public class IpoService {
         entity.setTaxAndFee(dto.getTaxAndFee() != null ? dto.getTaxAndFee() : 0L);
         entity.setSubscriptionFee(dto.getSubscriptionFee() != null ? dto.getSubscriptionFee() : 0L);
         entity.setYear(dto.getYear() != null ? dto.getYear() : entity.getYear());
+        entity.setSubscriptionStartDate(dto.getSubscriptionStartDate());
+        entity.setSubscriptionEndDate(dto.getSubscriptionEndDate());
+        entity.setListingDate(dto.getListingDate());
         repository.update(entity);
         ensureIpoStock(dto);
         return IpoDto.from(entity);

@@ -146,6 +146,7 @@
 <nav class="bottom-nav">
     <a href="/"><span>📊</span>대시보드</a>
     <a href="/ipo" class="active"><span>📋</span>청약내역</a>
+    <a href="/calendar"><span>📅</span>캘린더</a>
     <a href="/broker-fees"><span>💰</span>수수료</a>
 </nav>
 
@@ -205,9 +206,25 @@
                         </div>
                     </div>
 
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <label class="form-label">세금+매도수수료 (원)</label>
                         <input type="number" class="form-control" id="taxAndFee" value="0" inputmode="numeric">
+                    </div>
+
+                    <hr class="my-2">
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">청약시작일</label>
+                            <input type="date" class="form-control" id="subscriptionStartDate">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">청약종료일</label>
+                            <input type="date" class="form-control" id="subscriptionEndDate">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">상장일</label>
+                        <input type="date" class="form-control" id="listingDate">
                     </div>
                 </form>
             </div>
@@ -255,11 +272,10 @@
     const acDiv = document.getElementById('stockAutocomplete');
     let dartTimer = null;
 
-    function renderAC(dbHits, dartNames) {
-        // DB 결과 먼저, DART에서 DB에 없는 이름 추가
+    function renderAC(dbHits, ipoSchedules) {
         const dbNames = new Set(dbHits.map(s => s.stockName));
-        const dartOnly = dartNames.filter(n => !dbNames.has(n));
-        const total = dbHits.length + dartOnly.length;
+        const ipoOnly = ipoSchedules.filter(s => !dbNames.has(s.corpName));
+        const total = dbHits.length + ipoOnly.length;
         if (!total) { acDiv.style.display = 'none'; return; }
 
         const r = stockInput.getBoundingClientRect();
@@ -284,14 +300,27 @@
             acDiv.appendChild(div);
         });
 
-        // DART 전용 종목 (공모가 없음, 회색으로 구분)
-        dartOnly.forEach(name => {
+        // 공모 일정 종목 (청약일/상장일 + 확정공모가 자동채움)
+        ipoOnly.forEach(s => {
             const div = document.createElement('div');
-            div.style.color = '#888';
-            div.textContent = name + ' (DART)';
-            const pick = () => {
-                stockInput.value = name;
+            const sub = s.subscriptionStartDate ? s.subscriptionStartDate.slice(5).replace('-','/') : '';
+            div.textContent = s.corpName + (sub ? '  청약 ' + sub : '');
+            div.style.color = '#0d6efd';
+            const pick = async () => {
+                stockInput.value = s.corpName;
+                if (s.subscriptionStartDate) document.getElementById('subscriptionStartDate').value = s.subscriptionStartDate;
+                if (s.subscriptionEndDate)   document.getElementById('subscriptionEndDate').value   = s.subscriptionEndDate;
+                if (s.listingDate)           document.getElementById('listingDate').value           = s.listingDate;
                 acDiv.style.display = 'none';
+
+                // 확정공모가 자동채움: idx가 있으면 상세 fetch
+                if (s.idx) {
+                    try {
+                        const d = await fetch('/api/dart/ipo-detail?idx=' + s.idx).then(r => r.json());
+                        const price = ((d.info || {})['확정공모가'] || '').replace(/[^0-9]/g, '');
+                        if (price) document.getElementById('offeringPrice').value = price;
+                    } catch (e) {}
+                }
             };
             div.addEventListener('mousedown', e => { e.preventDefault(); pick(); });
             div.addEventListener('touchstart', e => { e.preventDefault(); pick(); }, { passive: false });
@@ -308,14 +337,13 @@
         // DB 결과 즉시 표시
         renderAC(dbHits, []);
 
-        // DART 검색 (300ms 디바운스)
+        // 공모 일정 검색 (300ms 디바운스)
         clearTimeout(dartTimer);
         dartTimer = setTimeout(() => {
             fetch('/api/dart/search?q=' + encodeURIComponent(val))
                 .then(r => r.json())
-                .then(names => {
-                    // 입력값이 바뀌지 않은 경우에만 렌더링
-                    if (stockInput.value.trim() === val) renderAC(dbHits, names);
+                .then(schedules => {
+                    if (stockInput.value.trim() === val) renderAC(dbHits, schedules);
                 })
                 .catch(() => {});
         }, 300);
@@ -405,40 +433,49 @@
     function openCreateModal() {
         document.getElementById('modalTitle').textContent = '청약 등록';
         document.getElementById('ipoForm').reset();
-        document.getElementById('formId').value = '';
-        document.getElementById('taxAndFee').value = 0;
-        document.getElementById('subscriptionFee').value = 0;
-        document.getElementById('soldQty').value = 0;
+        document.getElementById('formId').value              = '';
+        document.getElementById('taxAndFee').value           = 0;
+        document.getElementById('subscriptionFee').value     = 0;
+        document.getElementById('soldQty').value             = 0;
+        document.getElementById('subscriptionStartDate').value = '';
+        document.getElementById('subscriptionEndDate').value   = '';
+        document.getElementById('listingDate').value           = '';
         new bootstrap.Modal(document.getElementById('ipoModal')).show();
     }
 
     function openEditModal(d) {
-        document.getElementById('modalTitle').textContent = '청약 수정';
-        document.getElementById('formId').value = d.id;
-        document.getElementById('stockName').value = d.stockName;
-        document.getElementById('broker').value = d.broker;
-        document.getElementById('offeringPrice').value = d.offeringPrice;
-        document.getElementById('soldQty').value = d.soldQty || 0;
-        document.getElementById('soldDate').value = d.soldDate || '';
-        document.getElementById('soldPrice').value = d.soldPrice || '';
-        document.getElementById('taxAndFee').value = d.taxAndFee || 0;
-        document.getElementById('subscriptionFee').value = d.subscriptionFee || 0;
+        document.getElementById('modalTitle').textContent      = '청약 수정';
+        document.getElementById('formId').value                = d.id;
+        document.getElementById('stockName').value             = d.stockName;
+        document.getElementById('broker').value                = d.broker;
+        document.getElementById('offeringPrice').value         = d.offeringPrice;
+        document.getElementById('soldQty').value               = d.soldQty || 0;
+        document.getElementById('soldDate').value              = d.soldDate || '';
+        document.getElementById('soldPrice').value             = d.soldPrice || '';
+        document.getElementById('taxAndFee').value             = d.taxAndFee || 0;
+        document.getElementById('subscriptionFee').value       = d.subscriptionFee || 0;
+        document.getElementById('subscriptionStartDate').value = d.subscriptionStartDate || '';
+        document.getElementById('subscriptionEndDate').value   = d.subscriptionEndDate || '';
+        document.getElementById('listingDate').value           = d.listingDate || '';
         new bootstrap.Modal(document.getElementById('ipoModal')).show();
     }
 
     function saveIpo() {
         const id = document.getElementById('formId').value;
         const body = {
-            stockName:       document.getElementById('stockName').value,
-            broker:          document.getElementById('broker').value,
-            offeringPrice:   parseInt(document.getElementById('offeringPrice').value),
-            soldQty:         parseInt(document.getElementById('soldQty').value) || 0,
-            soldDate:        document.getElementById('soldDate').value || null,
-            soldPrice:       document.getElementById('soldPrice').value
-                                 ? parseInt(document.getElementById('soldPrice').value) : null,
-            taxAndFee:       parseInt(document.getElementById('taxAndFee').value) || 0,
-            subscriptionFee: parseInt(document.getElementById('subscriptionFee').value) || 0,
-            year:            parseInt(document.getElementById('yearSelect').value)
+            stockName:             document.getElementById('stockName').value,
+            broker:                document.getElementById('broker').value,
+            offeringPrice:         parseInt(document.getElementById('offeringPrice').value),
+            soldQty:               parseInt(document.getElementById('soldQty').value) || 0,
+            soldDate:              document.getElementById('soldDate').value || null,
+            soldPrice:             document.getElementById('soldPrice').value
+                                       ? parseInt(document.getElementById('soldPrice').value) : null,
+            taxAndFee:             parseInt(document.getElementById('taxAndFee').value) || 0,
+            subscriptionFee:       parseInt(document.getElementById('subscriptionFee').value) || 0,
+            subscriptionStartDate: document.getElementById('subscriptionStartDate').value || null,
+            subscriptionEndDate:   document.getElementById('subscriptionEndDate').value || null,
+            listingDate:           document.getElementById('listingDate').value || null,
+            year:                  parseInt(document.getElementById('yearSelect').value)
         };
         const url    = id ? '/api/ipo/' + id : '/api/ipo';
         const method = id ? 'PUT' : 'POST';
