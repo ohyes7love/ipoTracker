@@ -125,39 +125,24 @@ async function _fetchMonth(year, month) {
     return Object.values(byName);
 }
 
-// ── 캐시 (당월 + 다음달) ──────────────────────────────────
+// ── 캐시: 월별로 개별 관리 ────────────────────────────────
+// { '2026-03': [...], '2026-04': [...], ... }
+let _monthCache = {};
 
-let _kokCache    = null;
-let _kokCacheKey = null;
-
-async function getKokstockSchedules() {
-    const today = new Date();
-    const key   = `${today.getFullYear()}-${today.getMonth()}`;
-    if (_kokCache && _kokCacheKey === key) return _kokCache;
-
-    const y = today.getFullYear(), m = today.getMonth() + 1;
-    const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
-
-    try {
-        const [curr, next] = await Promise.all([_fetchMonth(y, m), _fetchMonth(ny, nm)]);
-        const merged = {};
-        [...curr, ...next].forEach(s => {
-            merged[s.corpName] = merged[s.corpName] ? { ...merged[s.corpName], ...s } : s;
-        });
-        _kokCache    = Object.values(merged);
-        _kokCacheKey = key;
-        console.log('[KOKSTOCK] 캐시 완료:', _kokCache.length, '종목');
-    } catch (e) {
-        console.warn('[KOKSTOCK] fetch 실패:', e);
-        if (!_kokCache) _kokCache = [];
+async function _getMonthCached(year, month) {
+    const ym = `${year}-${String(month).padStart(2,'0')}`;
+    if (!_monthCache[ym]) {
+        console.log('[KOKSTOCK] fetch 요청:', ym);
+        _monthCache[ym] = await _fetchMonth(year, month);
+        console.log('[KOKSTOCK] fetch 완료:', ym, _monthCache[ym].length, '건');
     }
-    return _kokCache;
+    return _monthCache[ym];
 }
 
 async function getKokstockSchedulesByMonth(year, month) {
-    const all = await getKokstockSchedules();
-    const ym  = `${year}-${String(month).padStart(2,'0')}`;
-    return all.filter(s =>
+    const ym   = `${year}-${String(month).padStart(2,'0')}`;
+    const data = await _getMonthCached(year, month);
+    return data.filter(s =>
         (s.subscriptionStartDate && s.subscriptionStartDate.startsWith(ym)) ||
         (s.subscriptionEndDate   && s.subscriptionEndDate.startsWith(ym))   ||
         (s.listingDate           && s.listingDate.startsWith(ym))
@@ -166,8 +151,14 @@ async function getKokstockSchedulesByMonth(year, month) {
 
 async function searchKokstockSchedule(query) {
     if (!query) return [];
-    const all = await getKokstockSchedules();
-    return all.filter(s => s.corpName && s.corpName.includes(query)).slice(0, 10);
+    // 검색은 현재달 + 다음달 대상
+    const today = new Date();
+    const y = today.getFullYear(), m = today.getMonth() + 1;
+    const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+    const [curr, next] = await Promise.all([_getMonthCached(y, m), _getMonthCached(ny, nm)]);
+    const merged = {};
+    [...curr, ...next].forEach(s => { merged[s.corpName] = s; });
+    return Object.values(merged).filter(s => s.corpName && s.corpName.includes(query)).slice(0, 10);
 }
 
 // ── 상세 정보 ─────────────────────────────────────────────
@@ -227,7 +218,10 @@ async function getKokstockDetail(idx) {
 }
 
 async function refreshKokstockCache() {
-    _kokCache    = null;
-    _kokCacheKey = null;
-    return getKokstockSchedules();
+    _monthCache = {};
+    // 현재달 + 다음달 미리 로드
+    const today = new Date();
+    const y = today.getFullYear(), m = today.getMonth() + 1;
+    const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+    await Promise.all([_getMonthCached(y, m), _getMonthCached(ny, nm)]);
 }
