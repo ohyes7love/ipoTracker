@@ -45,34 +45,45 @@ public class IpoStockService {
             .setDefaultCookieStore(COOKIE_STORE)
             .build();
 
-    // 캐시: 하루 1번만 fetch
-    private List<Map<String, String>> cache = null;
-    private LocalDate cacheDate = null;
+    // 캐시: 월별로 개별 관리 ("2026-03" → list)
+    private final Map<String, List<Map<String, String>>> monthCache = new LinkedHashMap<>();
 
     public List<Map<String, String>> getSchedulesByMonth(int year, int month) {
-        List<Map<String, String>> all = getAllSchedules();
-        String yearMonth = String.format("%04d-%02d", year, month);
-        return all.stream()
+        String ym = String.format("%04d-%02d", year, month);
+        if (!monthCache.containsKey(ym)) {
+            log.info("[KOKSTOCK] fetch 요청: {}", ym);
+            try {
+                Map<String, Map<String, String>> byName = new LinkedHashMap<>();
+                fetchSubscription(byName, year, month);
+                fetchListing(byName, year, month);
+                monthCache.put(ym, new ArrayList<>(byName.values()));
+                log.info("[KOKSTOCK] fetch 완료: {} → {}건", ym, monthCache.get(ym).size());
+            } catch (Exception e) {
+                log.warn("[KOKSTOCK] fetch 실패: {} {}", ym, e.getMessage());
+                monthCache.put(ym, List.of());
+            }
+        }
+        return monthCache.get(ym).stream()
                 .filter(s -> {
                     String sub  = s.get("subscriptionStartDate");
                     String sub2 = s.get("subscriptionEndDate");
                     String lst  = s.get("listingDate");
-                    return (sub  != null && sub.startsWith(yearMonth))
-                        || (sub2 != null && sub2.startsWith(yearMonth))
-                        || (lst  != null && lst.startsWith(yearMonth));
+                    return (sub  != null && sub.startsWith(ym))
+                        || (sub2 != null && sub2.startsWith(ym))
+                        || (lst  != null && lst.startsWith(ym));
                 })
                 .toList();
     }
 
     public List<String> searchCorpName(String query) {
-        return getAllSchedules().stream()
+        return getCurrentAndNextMonthSchedules().stream()
                 .map(m -> m.get("corpName"))
                 .filter(n -> n != null && n.contains(query))
                 .distinct().limit(10).toList();
     }
 
     public List<Map<String, String>> searchSchedule(String query) {
-        return getAllSchedules().stream()
+        return getCurrentAndNextMonthSchedules().stream()
                 .filter(m -> m.get("corpName") != null && m.get("corpName").contains(query))
                 .limit(10).toList();
     }
@@ -80,7 +91,7 @@ public class IpoStockService {
     /** kokstock 팝업 상세 정보: 세션 쿠키 확보 후 AJAX 호출 */
     public Map<String, Object> getIpoDetail(String idx) {
         // 메인 페이지를 먼저 fetch해서 세션 쿠키 확보
-        getAllSchedules();
+        getMonthRaw(LocalDate.now().getYear(), LocalDate.now().getMonthValue());
 
         String url = DETAIL_URL + idx;
         try {
@@ -191,46 +202,82 @@ public class IpoStockService {
 
     // ── 스케줄 캐시 ─────────────────────────────────────────
 
-    /** 캐시 강제 갱신 (수동 동기화 버튼용) */
+    /** 캐시 강제 갱신: 현재달+다음달 재로드 */
     public String refreshCache() {
-        try {
-            cache = fetch();
-            cacheDate = LocalDate.now();
-            return "ok:" + cache.size();
-        } catch (Exception e) {
-            log.warn("[KOKSTOCK] 갱신 실패: {}", e.getMessage());
-            return "error:" + e.getMessage();
-        }
-    }
-
-    private List<Map<String, String>> getAllSchedules() {
-        if (cache != null && LocalDate.now().equals(cacheDate)) return cache;
-        try {
-            cache = fetch();
-            cacheDate = LocalDate.now();
-        } catch (Exception e) {
-            log.warn("[KOKSTOCK] 스크래핑 실패: {}", e.getMessage());
-            if (cache == null) cache = List.of();
-        }
-        return cache;
-    }
-
-    private List<Map<String, String>> fetch() throws Exception {
-        Map<String, Map<String, String>> byName = new LinkedHashMap<>();
-
-        // 현재 달 + 다음 달 모두 수집
         LocalDate today = LocalDate.now();
         LocalDate next  = today.plusMonths(1);
+        String ym1 = String.format("%04d-%02d", today.getYear(), today.getMonthValue());
+        String ym2 = String.format("%04d-%02d", next.getYear(),  next.getMonthValue());
+        monthCache.remove(ym1);
+        monthCache.remove(ym2);
+        // 다시 로드
+        getSchedulesByMonth(today.getYear(), today.getMonthValue());
+        getSchedulesByMonth(next.getYear(),  next.getMonthValue());
+        int count = monthCache.getOrDefault(ym1, List.of()).size()
+                  + monthCache.getOrDefault(ym2, List.of()).size();
+        return "ok:" + count;
+    }
 
-        fetchSubscription(byName, today.getYear(), today.getMonthValue());
-        fetchSubscription(byName, next.getYear(),  next.getMonthValue());
-        fetchListing(byName,      today.getYear(), today.getMonthValue());
-        fetchListing(byName,      next.getYear(),  next.getMonthValue());
+    /**
+     * 특정 월의 모든 공모주에 대해 증권사별 참여 건수를 집계합니다.
+     * 각 종목의 detail을 fetch하므로 건수가 많으면 시간이 걸릴 수 있습니다.
+     */
+    public List<Map<String, Object>> getBrokerStats(int year, int month) {
+        List<Map<String, String>> schedules = getSchedulesByMonth(year, month);
 
-        List<Map<String, String>> result = new ArrayList<>(byName.values());
-        log.info("[KOKSTOCK] total {} IPO schedules ({}월+{}월)", result.size(),
-                today.getMonthValue(), next.getMonthValue());
+        // broker → { count, ipos }
+        Map<String, Integer> countMap = new LinkedHashMap<>();
+        Map<String, List<String>> iposMap = new LinkedHashMap<>();
+
+        for (Map<String, String> s : schedules) {
+            String idx = s.get("idx");
+            String corp = s.get("corpName");
+            if (idx == null || corp == null) continue;
+
+            try {
+                Map<String, Object> detail = getIpoDetail(idx);
+                @SuppressWarnings("unchecked")
+                List<Map<String, String>> brokers = (List<Map<String, String>>) detail.get("brokers");
+                if (brokers == null) continue;
+                for (Map<String, String> b : brokers) {
+                    String name = b.get("name");
+                    if (name == null || name.isBlank()) continue;
+                    countMap.merge(name, 1, Integer::sum);
+                    iposMap.computeIfAbsent(name, k -> new ArrayList<>()).add(corp);
+                }
+            } catch (Exception e) {
+                log.warn("[KOKSTOCK] brokerStats detail error: {} {}", corp, e.getMessage());
+            }
+        }
+
+        return countMap.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .map(e -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("brokerName", e.getKey());
+                    row.put("count", e.getValue());
+                    row.put("ipos", iposMap.getOrDefault(e.getKey(), List.of()));
+                    return row;
+                })
+                .toList();
+    }
+
+    /** 검색용: 현재달 + 다음달 전체 목록 */
+    private List<Map<String, String>> getCurrentAndNextMonthSchedules() {
+        LocalDate today = LocalDate.now();
+        LocalDate next  = today.plusMonths(1);
+        List<Map<String, String>> result = new ArrayList<>();
+        result.addAll(getMonthRaw(today.getYear(), today.getMonthValue()));
+        result.addAll(getMonthRaw(next.getYear(),  next.getMonthValue()));
         return result;
+    }
+
+    private List<Map<String, String>> getMonthRaw(int year, int month) {
+        String ym = String.format("%04d-%02d", year, month);
+        if (!monthCache.containsKey(ym)) {
+            getSchedulesByMonth(year, month); // 캐시 채움
+        }
+        return monthCache.getOrDefault(ym, List.of());
     }
 
     /** month-aware URL: ?page=1&pagesize=100&search_year=YYYY&search_month=MM */

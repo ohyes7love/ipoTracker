@@ -25,4 +25,9 @@ public class PageController {
     public String calendar() {
         return "calendar";
     }
+
+    @GetMapping("/stats")
+    public String stats() {
+        return "stats";
+    }
 }

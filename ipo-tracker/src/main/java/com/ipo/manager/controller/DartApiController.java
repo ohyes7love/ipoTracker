@@ -48,6 +48,12 @@ public class DartApiController {
         return ResponseEntity.ok(ipoStockService.getSchedulesByMonth(year, month));
     }
 
+    /** 증권사별 공모 참여 건수 집계 (해당 월의 모든 종목 detail 조회) */
+    @GetMapping("/broker-stats")
+    public ResponseEntity<?> brokerStats(@RequestParam int year, @RequestParam int month) {
+        return ResponseEntity.ok(ipoStockService.getBrokerStats(year, month));
+    }
+
     /** 디버그: list.json 원본 데이터 (report_nm 확인용) */
     @GetMapping("/debug")
     public ResponseEntity<?> debug() {

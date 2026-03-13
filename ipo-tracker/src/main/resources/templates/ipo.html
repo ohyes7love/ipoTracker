@@ -148,6 +148,7 @@
     <a href="/ipo" class="active"><span>📋</span>청약내역</a>
     <a href="/calendar"><span>📅</span>캘린더</a>
     <a href="/broker-fees"><span>💰</span>수수료</a>
+    <a href="/stats"><span>📈</span>통계</a>
 </nav>
 
 <div id="stockAutocomplete"></div>
@@ -273,8 +274,7 @@
     let dartTimer = null;
 
     function renderAC(dbHits, ipoSchedules) {
-        const dbNames = new Set(dbHits.map(s => s.stockName));
-        const ipoOnly = ipoSchedules.filter(s => !dbNames.has(s.corpName));
+        const ipoOnly = ipoSchedules;
         const total = dbHits.length + ipoOnly.length;
         if (!total) { acDiv.style.display = 'none'; return; }
 
@@ -369,7 +369,8 @@
 
     // ── 목록 로드 ────────────────────────────────────────────
     function loadTable(year) {
-        fetch('/api/ipo?year=' + year).then(r => r.json()).then(list => {
+        fetch('/api/ipo?year=' + year).then(r => r.json()).then(rawList => {
+            const list = rawList.sort((a, b) => (b.listingDate || '').localeCompare(a.listingDate || ''));
             const container = document.getElementById('ipoList');
             const totalEl   = document.getElementById('totalSum');
 
