@@ -212,10 +212,17 @@ async function getKokstockDetail(idx) {
             if (brokers.length > 0) break;
         }
 
-        return { info, market: doc.querySelector('span.badge')?.textContent.trim() || '', brokers };
+        // 비고 추출: info 객체에서 먼저, 없으면 DOM에서 탐색
+        let memo = info['비고'] || '';
+        if (!memo) {
+            const memoEl = doc.querySelector('ul.ul-memo') || doc.querySelector('.memo');
+            if (memoEl) memo = memoEl.textContent.trim();
+        }
+
+        return { info, market: doc.querySelector('span.badge')?.textContent.trim() || '', brokers, memo };
     } catch (e) {
         console.warn('[KOKSTOCK] detail error', idx, e.message);
-        return { info: {}, market: '', brokers: [] };
+        return { info: {}, market: '', brokers: [], memo: '' };
     }
 }
 
