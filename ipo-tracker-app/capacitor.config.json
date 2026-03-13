@@ -2,7 +2,7 @@
   "appId": "com.ipo.tracker",
   "appName": "공모주 수익 관리",
   "webDir": "www",
-  "plugins": {
+"plugins": {
     "CapacitorHttp": {
       "enabled": true
     }
