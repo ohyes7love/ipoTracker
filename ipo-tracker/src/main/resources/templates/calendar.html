@@ -165,6 +165,13 @@
     <div class="sheet-body" id="sheetBody">
         <div class="loading">로딩 중...</div>
     </div>
+    <div style="padding:10px 16px 12px">
+        <button id="btnRegister" onclick="goToRegister()"
+            style="width:100%;background:#0d6efd;color:#fff;border:none;border-radius:10px;
+                   padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+            📝 청약내역 등록
+        </button>
+    </div>
 </div>
 
 <nav class="bottom-nav">
@@ -259,8 +266,15 @@
         document.getElementById('calWrapper').innerHTML = html;
     }
 
+    // 현재 바텀시트에 열린 종목 데이터 (등록 버튼에서 사용)
+    let _currentSchedule = null;
+    let _currentDetail   = null;
+
     function showInfo(name) {
         const s = scheduleMap[name] || {};
+        _currentSchedule = s;
+        _currentDetail   = null;
+
         document.getElementById('infoName').textContent = name;
         const marketEl = document.getElementById('infoMarket');
         marketEl.style.display = 'none';
@@ -275,10 +289,31 @@
         fetch('/api/dart/ipo-detail?idx=' + s.idx)
             .then(r => r.json())
             .then(d => {
+                _currentDetail = d;
                 if (d.market) { marketEl.textContent = d.market; marketEl.style.display = 'inline'; }
                 renderDetailInfo(d);
             })
             .catch(() => renderBasicInfo(s));
+    }
+
+    function goToRegister() {
+        const s    = _currentSchedule || {};
+        const d    = _currentDetail;
+        const info = d && d.info ? d.info : {};
+
+        const rawPrice    = info['확정공모가'] || '';
+        const offeringPrice = rawPrice.replace(/[^0-9]/g, '') || '';
+
+        const prefill = {
+            stockName:             s.corpName || document.getElementById('infoName').textContent,
+            subscriptionStartDate: s.subscriptionStartDate || '',
+            subscriptionEndDate:   s.subscriptionEndDate   || '',
+            listingDate:           s.listingDate            || '',
+            offeringPrice:         offeringPrice
+        };
+
+        sessionStorage.setItem('calendarPrefill', JSON.stringify(prefill));
+        location.href = '/ipo';
     }
 
     function renderBasicInfo(s) {

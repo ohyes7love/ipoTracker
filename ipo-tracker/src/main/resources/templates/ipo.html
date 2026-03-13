@@ -505,6 +505,30 @@
     });
 
     loadTable(currentYear);
+
+    // ── 캘린더에서 넘어온 경우 자동 등록 모달 오픈 ──────────
+    (function checkCalendarPrefill() {
+        const raw = sessionStorage.getItem('calendarPrefill');
+        if (!raw) return;
+        sessionStorage.removeItem('calendarPrefill');
+        try {
+            const p = JSON.parse(raw);
+            setTimeout(() => {
+                document.getElementById('modalTitle').textContent = '청약 등록';
+                document.getElementById('ipoForm').reset();
+                document.getElementById('formId').value              = '';
+                document.getElementById('taxAndFee').value           = 0;
+                document.getElementById('subscriptionFee').value     = 0;
+                document.getElementById('soldQty').value             = 0;
+                if (p.stockName)             document.getElementById('stockName').value             = p.stockName;
+                if (p.subscriptionStartDate) document.getElementById('subscriptionStartDate').value = p.subscriptionStartDate;
+                if (p.subscriptionEndDate)   document.getElementById('subscriptionEndDate').value   = p.subscriptionEndDate;
+                if (p.listingDate)           document.getElementById('listingDate').value           = p.listingDate;
+                if (p.offeringPrice)         document.getElementById('offeringPrice').value         = p.offeringPrice;
+                new bootstrap.Modal(document.getElementById('ipoModal')).show();
+            }, 300);
+        } catch (e) { console.warn('prefill parse error', e); }
+    })();
 </script>
 </body>
 </html>
