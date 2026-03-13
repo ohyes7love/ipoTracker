@@ -19,10 +19,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * kokstock.com 공모주 일정 스크래퍼
- * 청약일정: /stock/ipo.asp
- * 상장일정: /stock/ipo_listing.asp
- * 상세:     /Ajax/popStockIPO.asp?I_IDX=xxx
+ * IpoStockService - kokstock.com 공모주 일정 스크래퍼 (서버 사이드)
+ *
+ * <p>kokstock.com의 공모주 청약/상장 일정을 HTTP 스크래핑으로 수집합니다.
+ * 한글 사이트 특성상 EUC-KR 인코딩을 사용하며, Jsoup의 meta charset 자동감지로 처리합니다.</p>
+ *
+ * <h3>스크래핑 대상 URL</h3>
+ * <ul>
+ *   <li>청약일정: /stock/ipo.asp?search_year=YYYY&search_month=MM</li>
+ *   <li>상장일정: /stock/ipo_listing.asp?search_year=YYYY&search_month=MM</li>
+ *   <li>종목상세: /Ajax/popStockIPO.asp?I_IDX={idx} (AJAX 팝업)</li>
+ * </ul>
+ *
+ * <h3>캐싱 전략</h3>
+ * <p>월별로 Map&lt;String, List&gt; 캐시를 유지합니다.
+ * 캘린더에서 이전/다음 달 이동 시 해당 월 데이터가 없으면 그때 fetch합니다.
+ * 동기화 버튼을 누르면 현재달+다음달 캐시를 invalidate하고 재로드합니다.</p>
+ *
+ * <h3>세션 쿠키 처리</h3>
+ * <p>AJAX detail 호출 전 메인 페이지를 먼저 fetch해 세션 쿠키를 확보합니다.
+ * BasicCookieStore를 공유하여 같은 HttpClient 인스턴스가 쿠키를 재사용합니다.</p>
  */
 @Service
 public class IpoStockService {
@@ -32,20 +48,27 @@ public class IpoStockService {
     private static final String BASE_URL    = "https://www.kokstock.com";
     private static final String IPO_URL     = BASE_URL + "/stock/ipo.asp";
     private static final String LISTING_URL = BASE_URL + "/stock/ipo_listing.asp";
+    /** 종목 상세 팝업 AJAX URL (I_IDX 파라미터로 종목 구분) */
     private static final String DETAIL_URL  = BASE_URL + "/Ajax/popStockIPO.asp?I_IDX=";
 
+    /** popStockIPO(611,'메쥬') 형식에서 idx 추출 */
     private static final Pattern IDX_PATTERN     = Pattern.compile("popStockIPO\\((\\d+)");
+    /** Content-Type 헤더에서 charset 추출 */
     private static final Pattern CHARSET_PATTERN = Pattern.compile("(?i)charset=([\\w-]+)");
 
-    // 쿠키 스토어 공유: 메인 페이지 세션 쿠키를 AJAX 요청에서도 재사용
+    // 메인 페이지 세션 쿠키를 AJAX detail 요청에서도 재사용하기 위해 공유
     private static final BasicCookieStore COOKIE_STORE = new BasicCookieStore();
 
+    /** 싱글턴 HttpClient: User-Agent 설정 및 쿠키 공유 */
     private static final CloseableHttpClient HTTP_CLIENT = HttpClients.custom()
             .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             .setDefaultCookieStore(COOKIE_STORE)
             .build();
 
-    // 캐시: 월별로 개별 관리 ("2026-03" → list)
+    /**
+     * 월별 캐시: "2026-03" → 해당 월 공모주 일정 목록
+     * <p>요청된 월이 캐시에 없으면 getSchedulesByMonth() 호출 시 fetch합니다.</p>
+     */
     private final Map<String, List<Map<String, String>>> monthCache = new LinkedHashMap<>();
 
     public List<Map<String, String>> getSchedulesByMonth(int year, int month) {
@@ -286,6 +309,11 @@ public class IpoStockService {
                 + "&search_month=" + String.format("%02d", month);
     }
 
+    /**
+     * kokstock 청약일정 페이지 스크래핑
+     * <p>tr.ipo-active-tr / tr.ipo-default-tr 행에서 종목명, 청약기간, idx를 추출합니다.
+     * 종목명은 anchor.ownText()로 읽어 배지(코스닥/코스피) 텍스트를 제거합니다.</p>
+     */
     private void fetchSubscription(Map<String, Map<String, String>> byName, int year, int month) throws Exception {
         String url = monthUrl(IPO_URL, year, month);
         log.info("[KOKSTOCK] fetching subscription {}", url);
@@ -318,6 +346,11 @@ public class IpoStockService {
         }
     }
 
+    /**
+     * kokstock 상장일정 페이지 스크래핑
+     * <p>청약일정에서 이미 등록된 종목이면 listingDate만 추가하고,
+     * 청약일 없이 상장일만 있는 종목은 새로 추가합니다.</p>
+     */
     private void fetchListing(Map<String, Map<String, String>> byName, int year, int month) throws Exception {
         String url = monthUrl(LISTING_URL, year, month);
         log.info("[KOKSTOCK] fetching listing {}", url);
@@ -354,6 +387,12 @@ public class IpoStockService {
 
     // ── HTTP 유틸 ────────────────────────────────────────────
 
+    /**
+     * URL을 fetch하여 Jsoup Document로 반환합니다.
+     * <p>응답 바이트를 먼저 읽은 뒤 Jsoup.parse(InputStream, null, url)로 파싱합니다.
+     * charset=null 이면 Jsoup이 HTML &lt;meta charset&gt; 태그를 자동감지하므로
+     * EUC-KR 사이트도 별도 처리 없이 올바르게 파싱됩니다.</p>
+     */
     private Document fetchDoc(String url) throws Exception {
         HttpGet get = new HttpGet(url);
         get.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
@@ -364,12 +403,20 @@ public class IpoStockService {
             log.info("[KOKSTOCK] HTTP {} {}", response.getCode(), url);
             return response.getEntity().getContent().readAllBytes();
         });
-        // Jsoup이 meta charset 태그를 자동 감지 (EUC-KR 포함)
+        // charset=null → Jsoup이 <meta charset="euc-kr"> 를 읽어 자동 디코딩
         return Jsoup.parse(new ByteArrayInputStream(bytes), null, url);
     }
 
     // ── 날짜 파싱 ─────────────────────────────────────────────
 
+    /**
+     * "MM/DD ~ MM/DD" 또는 "YYYY/MM/DD" 형식의 날짜 범위 문자열을 파싱합니다.
+     *
+     * @param text     원본 날짜 문자열
+     * @param item     결과를 저장할 Map
+     * @param startKey 시작일 키 (예: "subscriptionStartDate")
+     * @param endKey   종료일 키 (예: "subscriptionEndDate")
+     */
     private void parseDateRange(String text, Map<String, String> item, String startKey, String endKey) {
         if (text == null || text.isBlank()) return;
         String[] parts = text.split("~");
@@ -386,6 +433,16 @@ public class IpoStockService {
 
     private static final int CURRENT_YEAR = LocalDate.now().getYear();
 
+    /**
+     * 날짜 문자열을 "YYYY-MM-DD" 형식으로 파싱합니다.
+     * <p>지원 형식:
+     * <ul>
+     *   <li>YYYY/MM/DD 또는 YYYY.MM.DD → YYYY-MM-DD</li>
+     *   <li>MM/DD 또는 MM.DD           → 현재연도-MM-DD</li>
+     *   <li>YYYYMMDD (8자리)           → YYYY-MM-DD</li>
+     * </ul>
+     * </p>
+     */
     private String parseDate(String text) {
         if (text == null || text.isBlank()) return null;
         text = text.trim().replaceAll("[^0-9/.]", "");

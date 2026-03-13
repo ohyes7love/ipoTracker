@@ -1,6 +1,28 @@
 /**
  * db.js - IndexedDB 기반 로컬 데이터 저장소
- * Spring Boot + MySQL 역할을 브라우저 IndexedDB로 대체
+ *
+ * Spring Boot + MySQL의 역할을 Capacitor 앱 내 IndexedDB로 대체합니다.
+ * 서버 없이 독립 실행되며 앱 삭제 전까지 데이터가 영구 보존됩니다.
+ *
+ * ■ Object Store 구성
+ *   - ipo_subscription : 공모주 청약 내역 (keyPath: id, autoIncrement)
+ *                        인덱스: year (연도별 조회)
+ *   - ipo_stock        : 자동완성용 종목 정보 (keyPath: stockName)
+ *                        청약 내역 저장 시 자동 upsert
+ *   - broker_fee       : 증권사별 청약수수료 (keyPath: brokerName)
+ *                        앱 첫 실행 시 DEFAULT_BROKER_FEES 로 초기화
+ *
+ * ■ 수익 계산 공식
+ *   profit = (매도가 - 공모가) × 배정수량 - 세금/수수료 - 청약수수료
+ *
+ * ■ 주요 함수
+ *   - getIposByYear(year)       : 연도별 청약 내역 (수익 계산 포함)
+ *   - createIpo(dto)            : 청약 내역 등록
+ *   - updateIpo(id, dto)        : 청약 내역 수정
+ *   - deleteIpo(id)             : 청약 내역 삭제
+ *   - getMonthlySummary(year)   : 월별 수익 집계
+ *   - getAllBrokerFees()        : 증권사 수수료 목록
+ *   - updateBrokerFee(name,fee) : 증권사 수수료 수정
  */
 
 const DB_NAME    = 'ipoTracker';
@@ -29,6 +51,10 @@ const DEFAULT_BROKER_FEES = [
 // ── DB 연결 ──────────────────────────────────────────────
 let _db = null;
 
+/**
+ * IndexedDB를 열고 연결을 반환합니다 (싱글턴).
+ * 최초 호출 시 Object Store를 생성하고 초기 인덱스를 설정합니다.
+ */
 function openDB() {
     if (_db) return Promise.resolve(_db);
     return new Promise((resolve, reject) => {
@@ -51,6 +77,7 @@ function openDB() {
     });
 }
 
+/** IndexedDB 트랜잭션 헬퍼: store에 대해 mode 트랜잭션을 열고 fn을 실행합니다. */
 function tx(store, mode, fn) {
     return openDB().then(db => new Promise((resolve, reject) => {
         const t = db.transaction(store, mode);
@@ -59,6 +86,7 @@ function tx(store, mode, fn) {
     }));
 }
 
+/** IDBRequest를 Promise로 래핑하는 유틸 함수 */
 function req2p(r) {
     return new Promise((res, rej) => {
         r.onsuccess = e => res(e.target.result);
@@ -79,6 +107,11 @@ async function initDefaultData() {
 }
 
 // ── 수익 계산 ────────────────────────────────────────────
+/**
+ * 공모주 1건의 수익을 계산합니다.
+ * 매도가(soldPrice)가 없으면 null 반환 (미매도 상태).
+ * 수익 = (매도가 - 공모가) × 배정수량 - 세금/수수료 - 청약수수료
+ */
 function calcProfit(item) {
     if (item.soldPrice == null || item.soldPrice === '') return null;
     return (Number(item.soldPrice) - Number(item.offeringPrice)) * Number(item.soldQty || 0)
