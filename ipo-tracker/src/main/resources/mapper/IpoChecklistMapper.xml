@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ipo.manager.repository.IpoChecklistRepository">
+
+    <resultMap id="checklistResultMap" type="com.ipo.manager.domain.IpoChecklist">
+        <id     property="corpName"              column="corp_name"/>
+        <result property="kokIdx"                column="kok_idx"/>
+        <result property="subscriptionStartDate" column="subscription_start_date"/>
+        <result property="subscriptionEndDate"   column="subscription_end_date"/>
+        <result property="listingDate"           column="listing_date"/>
+        <result property="offeringPrice"         column="offering_price"/>
+        <result property="accounts"              column="accounts"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="checklistResultMap">
+        SELECT corp_name, kok_idx, subscription_start_date, subscription_end_date,
+               listing_date, offering_price, accounts
+        FROM ipo_checklist
+        ORDER BY subscription_start_date DESC
+    </select>
+
+    <select id="findByCorpName" resultMap="checklistResultMap">
+        SELECT corp_name, kok_idx, subscription_start_date, subscription_end_date,
+               listing_date, offering_price, accounts
+        FROM ipo_checklist
+        WHERE corp_name = #{corpName}
+    </select>
+
+    <!-- INSERT ... ON DUPLICATE KEY UPDATE: corp_name이 이미 존재하면 갱신 -->
+    <insert id="upsert">
+        INSERT INTO ipo_checklist
+            (corp_name, kok_idx, subscription_start_date, subscription_end_date,
+             listing_date, offering_price, accounts)
+        VALUES
+            (#{corpName}, #{kokIdx}, #{subscriptionStartDate}, #{subscriptionEndDate},
+             #{listingDate}, #{offeringPrice}, #{accounts})
+        ON DUPLICATE KEY UPDATE
+            kok_idx                 = VALUES(kok_idx),
+            subscription_start_date = VALUES(subscription_start_date),
+            subscription_end_date   = VALUES(subscription_end_date),
+            listing_date            = VALUES(listing_date),
+            offering_price          = VALUES(offering_price),
+            accounts                = VALUES(accounts)
+    </insert>
+
+    <delete id="deleteByCorpName">
+        DELETE FROM ipo_checklist WHERE corp_name = #{corpName}
+    </delete>
+
+</mapper>

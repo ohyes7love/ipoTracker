@@ -30,4 +30,9 @@ public class PageController {
     public String stats() {
         return "stats";
     }
+
+    @GetMapping("/checklist")
+    public String checklist() {
+        return "checklist";
+    }
 }

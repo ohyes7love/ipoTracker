@@ -26,7 +26,7 @@
  */
 
 const DB_NAME    = 'ipoTracker';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const DEFAULT_BROKER_FEES = [
     { brokerName: '미래에셋', feeAmount: 2000 },
@@ -70,6 +70,10 @@ function openDB() {
             }
             if (!db.objectStoreNames.contains('broker_fee')) {
                 db.createObjectStore('broker_fee', { keyPath: 'brokerName' });
+            }
+            // v2: 청약 체크리스트 (계좌별 신청/배정/환불 상태 관리)
+            if (!db.objectStoreNames.contains('ipo_checklist')) {
+                db.createObjectStore('ipo_checklist', { keyPath: 'corpName' });
             }
         };
         req.onsuccess = e => { _db = e.target.result; resolve(_db); };
@@ -205,6 +209,49 @@ async function getAllBrokerFees() {
 async function updateBrokerFee(brokerName, feeAmount) {
     const db = await openDB();
     return req2p(db.transaction('broker_fee', 'readwrite').objectStore('broker_fee').put({ brokerName, feeAmount }));
+}
+
+// ── IPO Checklist (계좌별 청약 체크리스트) ───────────────
+/**
+ * 체크리스트 레코드 구조:
+ * {
+ *   corpName: "메쥬",                           // keyPath (종목명 = 고유키)
+ *   kokIdx: "611",                              // kokstock 상세 팝업 IDX
+ *   subscriptionStartDate: "2026-03-16",
+ *   subscriptionEndDate:   "2026-03-17",
+ *   listingDate:           "2026-03-25",
+ *   offeringPrice:         12000,
+ *   accounts: {
+ *     "경록": { applied: false, qty: 0, refunded: false, registered: false },
+ *     "지선": { applied: false, qty: 0, refunded: false, registered: false },
+ *     "하준": { applied: false, qty: 0, refunded: false, registered: false },
+ *     "하민": { applied: false, qty: 0, refunded: false, registered: false }
+ *   }
+ * }
+ */
+
+/** 전체 체크리스트 항목 반환 */
+async function getAllChecklists() {
+    const db = await openDB();
+    return req2p(db.transaction('ipo_checklist', 'readonly').objectStore('ipo_checklist').getAll());
+}
+
+/** 종목명으로 단일 체크리스트 항목 반환 */
+async function getChecklist(corpName) {
+    const db = await openDB();
+    return req2p(db.transaction('ipo_checklist', 'readonly').objectStore('ipo_checklist').get(corpName));
+}
+
+/** 체크리스트 항목 저장 (upsert) */
+async function saveChecklist(item) {
+    const db = await openDB();
+    return req2p(db.transaction('ipo_checklist', 'readwrite').objectStore('ipo_checklist').put(item));
+}
+
+/** 체크리스트 항목 삭제 */
+async function deleteChecklist(corpName) {
+    const db = await openDB();
+    return req2p(db.transaction('ipo_checklist', 'readwrite').objectStore('ipo_checklist').delete(corpName));
 }
 
 // ── DART 공시 검색 (자동완성 보조) ───────────────────────

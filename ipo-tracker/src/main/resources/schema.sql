@@ -26,3 +26,14 @@ CREATE TABLE IF NOT EXISTS ipo_subscription (
     listing_date            DATE
 );
 
+-- 청약 체크리스트: 계좌별(경록/지선/하준/하민) 신청/배정/환불/등록 상태 관리
+CREATE TABLE IF NOT EXISTS ipo_checklist (
+    corp_name               VARCHAR(100) NOT NULL PRIMARY KEY,
+    kok_idx                 VARCHAR(20),
+    subscription_start_date VARCHAR(10),
+    subscription_end_date   VARCHAR(10),
+    listing_date            VARCHAR(10),
+    offering_price          BIGINT,
+    accounts                TEXT         COMMENT '계좌별 상태 JSON {"경록":{"applied":true,"qty":5,"refunded":true,"registered":false},...}'
+);
+

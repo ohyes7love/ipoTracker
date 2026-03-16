@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>체크리스트 - 공모주 수익 관리</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #f5f6fa; padding-bottom: 80px; font-size: 14px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+        /* ── 하단 네비게이션 ── */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: #0d6efd; display: flex; border-top: 1px solid #0b5ed7;
+        }
+        .bottom-nav a {
+            flex: 1; color: rgba(255,255,255,0.7); text-decoration: none;
+            text-align: center; padding: 8px 0; font-size: 10px; line-height: 1.3;
+        }
+        .bottom-nav a.active { color: #fff; font-weight: 700; }
+        .bottom-nav a span { display: block; font-size: 16px; }
+
+        /* ── 상단 바 ── */
+        .top-bar {
+            background: #0d6efd; color: #fff; padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar h1 { font-size: 16px; margin: 0; font-weight: 700; }
+        .btn-sync {
+            background: rgba(255,255,255,0.2); color: #fff; border: none;
+            border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+        }
+        .btn-sync:disabled { opacity: 0.5; }
+
+        /* ── 필터 탭 ── */
+        .filter-tabs {
+            display: flex; background: #fff;
+            border-bottom: 1px solid #e0e0e0; overflow-x: auto;
+        }
+        .filter-tab {
+            flex: 1; padding: 10px 8px; text-align: center; font-size: 12px;
+            font-weight: 600; color: #888; border-bottom: 2px solid transparent;
+            cursor: pointer; white-space: nowrap; min-width: 60px;
+        }
+        .filter-tab.active { color: #0d6efd; border-bottom-color: #0d6efd; }
+
+        /* ── 공모주 카드 ── */
+        .section { padding: 10px 12px; }
+        .ipo-card {
+            background: #fff; border-radius: 14px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 12px; overflow: hidden;
+        }
+        .card-hdr {
+            padding: 12px 14px 8px; display: flex; align-items: flex-start;
+            justify-content: space-between; border-bottom: 1px solid #f0f0f0;
+        }
+        .card-hdr-left { flex: 1; }
+        .corp-name { font-size: 15px; font-weight: 700; color: #212529; }
+        .card-dates { font-size: 11px; color: #888; margin-top: 3px; line-height: 1.7; }
+        .card-dates span { display: inline-block; margin-right: 8px; }
+        .progress-badge {
+            font-size: 10px; font-weight: 700; padding: 3px 8px;
+            border-radius: 10px; flex-shrink: 0; margin-top: 2px;
+        }
+        .badge-active   { background: #e8f5e9; color: #2e7d32; }
+        .badge-waiting  { background: #fff3e0; color: #e65100; }
+        .badge-listing  { background: #e3f2fd; color: #1565c0; }
+        .badge-done     { background: #f5f5f5; color: #9e9e9e; }
+
+        /* ── 계좌 테이블 ── */
+        .acc-table { width: 100%; border-collapse: collapse; }
+        .acc-table th {
+            background: #f8f9fa; font-size: 10px; color: #888; font-weight: 600;
+            padding: 6px 8px; text-align: center; border-bottom: 1px solid #eee;
+        }
+        .acc-table td {
+            padding: 9px 6px; text-align: center;
+            border-bottom: 1px solid #f5f5f5; vertical-align: middle;
+        }
+        .acc-table tr:last-child td { border-bottom: none; }
+        .acc-name-cell { font-size: 12px; font-weight: 700; color: #333; text-align: left; padding-left: 14px; }
+        .acc-name-cell.inactive { color: #bbb; }
+
+        /* 체크박스 스타일 */
+        .chk-wrap { display: flex; justify-content: center; align-items: center; }
+        .chk-wrap input[type=checkbox] {
+            width: 18px; height: 18px; accent-color: #0d6efd; cursor: pointer;
+        }
+
+        /* 배정수량 입력 */
+        .qty-input {
+            width: 56px; border: 1px solid #dee2e6; border-radius: 6px;
+            padding: 4px 6px; font-size: 12px; text-align: center;
+            color: #212529; background: #fff;
+        }
+        .qty-input:focus { outline: none; border-color: #0d6efd; }
+        .qty-input:disabled { background: #f8f9fa; color: #adb5bd; }
+
+        /* 청약내역 등록 버튼 */
+        .btn-reg {
+            background: #0d6efd; color: #fff; border: none;
+            border-radius: 6px; padding: 5px 8px; font-size: 10px;
+            font-weight: 700; cursor: pointer; white-space: nowrap;
+        }
+        .btn-reg:disabled { background: #adb5bd; cursor: default; }
+        .btn-reg.done { background: #198754; }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center; padding: 50px 20px; color: #adb5bd;
+            font-size: 13px; line-height: 2;
+        }
+        .empty-icon { font-size: 40px; display: block; margin-bottom: 8px; }
+
+        /* 로딩 */
+        .loading { text-align: center; padding: 40px; color: #adb5bd; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h1>✅ 청약 체크리스트</h1>
+    <button class="btn-sync" id="syncBtn" onclick="doSync()">🔄 동기화</button>
+</div>
+
+<div class="filter-tabs">
+    <div class="filter-tab active" data-filter="active"  onclick="setFilter('active')">청약중</div>
+    <div class="filter-tab"        data-filter="waiting" onclick="setFilter('waiting')">배정대기</div>
+    <div class="filter-tab"        data-filter="listing" onclick="setFilter('listing')">상장예정</div>
+    <div class="filter-tab"        data-filter="all"     onclick="setFilter('all')">전체</div>
+</div>
+
+<div class="section" id="cardSection">
+    <div class="loading">kokstock 일정을 불러오는 중...</div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="index.html"><span>📊</span>대시보드</a>
+    <a href="ipo.html"><span>📋</span>청약내역</a>
+    <a href="calendar.html"><span>📅</span>캘린더</a>
+    <a href="checklist.html" class="active"><span>✅</span>체크</a>
+    <a href="stats.html"><span>📈</span>통계</a>
+</nav>
+
+<script src="js/db.js"></script>
+<script src="js/kokstock.js"></script>
+<script>
+    const ACCOUNTS = ['경록', '지선', '하준', '하민'];
+
+    let _items    = [];   // 병합된 체크리스트 아이템 목록
+    let _filter   = 'active';
+    let _dbMap    = {};   // corpName → DB 레코드
+
+    // ── 필터 ────────────────────────────────────────────────
+    function setFilter(f) {
+        _filter = f;
+        document.querySelectorAll('.filter-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.filter === f);
+        });
+        renderCards();
+    }
+
+    /** 오늘 날짜 기준으로 종목 상태를 반환합니다. */
+    function getStatus(item) {
+        const today = new Date().toISOString().slice(0, 10);
+        if (item.subscriptionStartDate <= today && today <= item.subscriptionEndDate) return 'active';   // 청약중
+        if (item.subscriptionEndDate < today && (!item.listingDate || item.listingDate > today)) return 'waiting'; // 배정대기
+        if (item.listingDate && item.listingDate > today) return 'listing'; // 상장예정
+        return 'done'; // 종료
+    }
+
+    // ── 데이터 로드 ─────────────────────────────────────────
+    async function loadData() {
+        const [dbItems, sched1, sched2] = await Promise.all([
+            getAllChecklists(),
+            getKokstockSchedulesByMonth(new Date().getFullYear(), new Date().getMonth() + 1),
+            getKokstockSchedulesByMonth(
+                new Date().getMonth() === 11 ? new Date().getFullYear() + 1 : new Date().getFullYear(),
+                new Date().getMonth() === 11 ? 1 : new Date().getMonth() + 2
+            )
+        ]);
+
+        // DB 맵 구성 (corpName → 레코드)
+        _dbMap = {};
+        dbItems.forEach(d => { _dbMap[d.corpName] = d; });
+
+        // kokstock 일정과 DB 데이터 병합
+        const seen = new Set();
+        _items = [];
+        for (const s of [...sched1, ...sched2]) {
+            if (seen.has(s.corpName)) continue;
+            seen.add(s.corpName);
+
+            const db = _dbMap[s.corpName];
+            _items.push({
+                corpName:             s.corpName,
+                kokIdx:               s.idx || '',
+                subscriptionStartDate: s.subscriptionStartDate || '',
+                subscriptionEndDate:   s.subscriptionEndDate   || '',
+                listingDate:           s.listingDate            || '',
+                offeringPrice:         db ? db.offeringPrice : 0,
+                accounts:              db ? db.accounts : defaultAccounts()
+            });
+        }
+
+        renderCards();
+    }
+
+    /** 기본 계좌 상태 구조를 반환합니다. */
+    function defaultAccounts() {
+        const obj = {};
+        ACCOUNTS.forEach(a => { obj[a] = { applied: false, qty: 0, refunded: false, registered: false }; });
+        return obj;
+    }
+
+    // ── 렌더링 ──────────────────────────────────────────────
+    function renderCards() {
+        const section = document.getElementById('cardSection');
+        const today   = new Date().toISOString().slice(0, 10);
+
+        let filtered = _items;
+        if (_filter !== 'all') {
+            filtered = _items.filter(i => getStatus(i) === _filter);
+        }
+
+        if (!filtered.length) {
+            section.innerHTML = `<div class="empty-state">
+                <span class="empty-icon">📋</span>
+                해당 상태의 공모주가 없습니다.<br>
+                동기화 버튼으로 최신 일정을 불러오세요.
+            </div>`;
+            return;
+        }
+
+        section.innerHTML = filtered.map(item => buildCard(item)).join('');
+    }
+
+    function statusBadge(item) {
+        const s = getStatus(item);
+        if (s === 'active')  return '<span class="progress-badge badge-active">청약중</span>';
+        if (s === 'waiting') return '<span class="progress-badge badge-waiting">배정대기</span>';
+        if (s === 'listing') return '<span class="progress-badge badge-listing">상장예정</span>';
+        return '<span class="progress-badge badge-done">종료</span>';
+    }
+
+    function buildCard(item) {
+        const cn  = item.corpName;
+        const cnQ = cn.replace(/'/g, "\\'");
+        const sub = [item.subscriptionStartDate, item.subscriptionEndDate].filter(Boolean).join(' ~ ');
+
+        const rows = ACCOUNTS.map(acc => {
+            const a    = (item.accounts || {})[acc] || { applied: false, qty: 0, refunded: false, registered: false };
+            const reg  = a.registered;
+            const regBtn = a.qty > 0
+                ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cnQ}','${acc}')" ${reg ? 'disabled' : ''}>
+                       ${reg ? '✓등록됨' : '📝등록'}
+                   </button>`
+                : `<span style="color:#dee2e6;font-size:11px">-</span>`;
+
+            return `<tr>
+                <td class="acc-name-cell ${!a.applied ? 'inactive' : ''}">${acc}</td>
+                <td><div class="chk-wrap">
+                    <input type="checkbox" ${a.applied ? 'checked' : ''}
+                        onchange="updateField('${cnQ}','${acc}','applied',this.checked)">
+                </div></td>
+                <td><input class="qty-input" type="number" min="0" value="${a.qty || 0}"
+                    onchange="updateField('${cnQ}','${acc}','qty',parseInt(this.value)||0)"
+                    ${!a.applied ? 'disabled' : ''}></td>
+                <td><div class="chk-wrap">
+                    <input type="checkbox" ${a.refunded ? 'checked' : ''}
+                        onchange="updateField('${cnQ}','${acc}','refunded',this.checked)"
+                        ${!a.applied ? 'disabled' : ''}>
+                </div></td>
+                <td>${regBtn}</td>
+            </tr>`;
+        }).join('');
+
+        return `<div class="ipo-card" id="card-${CSS.escape(cn)}">
+            <div class="card-hdr">
+                <div class="card-hdr-left">
+                    <div class="corp-name">${cn}</div>
+                    <div class="card-dates">
+                        ${sub ? `<span>📅 청약 ${sub}</span>` : ''}
+                        ${item.listingDate ? `<span>🚀 상장 ${item.listingDate}</span>` : ''}
+                    </div>
+                </div>
+                ${statusBadge(item)}
+            </div>
+            <table class="acc-table">
+                <thead><tr>
+                    <th style="text-align:left;padding-left:14px">계좌</th>
+                    <th>신청</th><th>배정수량</th><th>환불</th><th>등록</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+    }
+
+    // ── 상태 업데이트 ────────────────────────────────────────
+    /** 특정 계좌의 특정 필드를 변경하고 DB에 자동저장합니다. */
+    async function updateField(corpName, acc, field, value) {
+        const item = _items.find(i => i.corpName === corpName);
+        if (!item) return;
+        if (!item.accounts[acc]) item.accounts[acc] = { applied: false, qty: 0, refunded: false, registered: false };
+        item.accounts[acc][field] = value;
+
+        // 신청 해제 시 배정수량/환불도 초기화
+        if (field === 'applied' && !value) {
+            item.accounts[acc].qty      = 0;
+            item.accounts[acc].refunded = false;
+        }
+
+        await saveChecklist(item);
+        _dbMap[corpName] = item;
+
+        // 해당 카드만 다시 렌더
+        const cardEl = document.getElementById('card-' + CSS.escape(corpName));
+        if (cardEl) cardEl.outerHTML = buildCard(item);
+    }
+
+    // ── 청약내역 등록 ─────────────────────────────────────────
+    /** 배정된 계좌의 정보를 sessionStorage에 저장 후 ipo.html로 이동합니다. */
+    function goRegister(corpName, acc) {
+        const item = _items.find(i => i.corpName === corpName);
+        if (!item) return;
+        const a = (item.accounts || {})[acc] || {};
+
+        const prefill = {
+            stockName:             corpName,
+            subscriptionStartDate: item.subscriptionStartDate || '',
+            subscriptionEndDate:   item.subscriptionEndDate   || '',
+            listingDate:           item.listingDate            || '',
+            offeringPrice:         item.offeringPrice ? String(item.offeringPrice) : '',
+            accounts:              acc,       // 해당 계좌만 선택
+            soldQty:               a.qty || 0
+        };
+
+        sessionStorage.setItem('calendarPrefill', JSON.stringify(prefill));
+        location.href = 'ipo.html';
+    }
+
+    // ── 동기화 ──────────────────────────────────────────────
+    /** kokstock 캐시를 초기화하고 최신 데이터를 다시 불러옵니다. */
+    async function doSync() {
+        const btn = document.getElementById('syncBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ 동기화중...';
+        try {
+            await refreshKokstockCache();
+            await loadData();
+            btn.textContent = '✅ 완료';
+        } catch (e) {
+            btn.textContent = '❌ 실패';
+        }
+        setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 동기화'; }, 2000);
+    }
+
+    // ── 초기 로드 ────────────────────────────────────────────
+    loadData().catch(e => {
+        document.getElementById('cardSection').innerHTML =
+            `<div class="loading" style="color:#dc3545">로드 실패: ${e.message}</div>`;
+    });
+</script>
+</body>
+</html>
