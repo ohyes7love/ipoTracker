@@ -77,8 +77,16 @@
         .chk-wrap { display: flex; justify-content: center; }
         .chk-wrap input[type=checkbox] { width: 18px; height: 18px; accent-color: #0d6efd; cursor: pointer; }
 
+        .broker-sel {
+            width: 72px; border: 1px solid #dee2e6; border-radius: 6px;
+            padding: 4px 4px; font-size: 11px; color: #212529; background: #fff;
+            appearance: none; -webkit-appearance: none; text-align: center;
+        }
+        .broker-sel:focus    { outline: none; border-color: #0d6efd; }
+        .broker-sel:disabled { background: #f8f9fa; color: #adb5bd; }
+
         .qty-input {
-            width: 56px; border: 1px solid #dee2e6; border-radius: 6px;
+            width: 50px; border: 1px solid #dee2e6; border-radius: 6px;
             padding: 4px 6px; font-size: 12px; text-align: center;
         }
         .qty-input:focus  { outline: none; border-color: #0d6efd; }
@@ -126,9 +134,10 @@
 <script>
     const ACCOUNTS = ['경록', '지선', '하준', '하민'];
 
-    let _items  = [];
-    let _filter = 'active';
-    let _dbMap  = {};   // corpName → DB 레코드
+    let _items   = [];
+    let _filter  = 'active';
+    let _dbMap   = {};   // corpName → DB 레코드
+    let _brokers = [];   // 증권사 목록
 
     function setFilter(f) {
         _filter = f;
@@ -148,11 +157,24 @@
 
     function defaultAccounts() {
         const obj = {};
-        ACCOUNTS.forEach(a => { obj[a] = { applied: false, qty: 0, refunded: false, registered: false }; });
+        ACCOUNTS.forEach(a => { obj[a] = { applied: false, broker: '', qty: 0, refunded: false, registered: false }; });
         return obj;
     }
 
+    function brokerSelect(cnQ, acc, selected, disabled) {
+        const opts = ['', ..._brokers].map(b =>
+            `<option value="${b}" ${b === selected ? 'selected' : ''}>${b || '선택'}</option>`
+        ).join('');
+        return `<select class="broker-sel" ${disabled ? 'disabled' : ''}
+            onchange="updateField('${cnQ}','${acc}','broker',this.value)">${opts}</select>`;
+    }
+
     async function loadData() {
+        if (!_brokers.length) {
+            const fees = await fetch('/api/broker-fees').then(r => r.json());
+            _brokers = fees.map(f => f.brokerName).sort((a, b) => a.localeCompare(b, 'ko'));
+        }
+
         const now  = new Date();
         const y1   = now.getFullYear(), m1 = now.getMonth() + 1;
         const y2   = m1 === 12 ? y1 + 1 : y1, m2 = m1 === 12 ? 1 : m1 + 1;
@@ -220,10 +242,11 @@
         const sub = [item.subscriptionStartDate, item.subscriptionEndDate].filter(Boolean).join(' ~ ');
 
         const rows = ACCOUNTS.map(acc => {
-            const a   = (item._accounts || {})[acc] || { applied: false, qty: 0, refunded: false, registered: false };
+            const a   = (item._accounts || {})[acc] || { applied: false, broker: '', qty: 0, refunded: false, registered: false };
+            const cnE = cn.replace(/'/g, "\\'");
             const reg = a.registered;
             const regBtn = a.qty > 0
-                ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cn.replace(/'/g,"\\'")}','${acc}')" ${reg ? 'disabled' : ''}>
+                ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cnE}','${acc}')" ${reg ? 'disabled' : ''}>
                        ${reg ? '✓등록됨' : '📝등록'}
                    </button>`
                 : `<span style="color:#dee2e6;font-size:11px">-</span>`;
@@ -232,14 +255,15 @@
                 <td class="acc-name-cell ${!a.applied ? 'inactive' : ''}">${acc}</td>
                 <td><div class="chk-wrap">
                     <input type="checkbox" ${a.applied ? 'checked' : ''}
-                        onchange="updateField('${cn.replace(/'/g,"\\'")}','${acc}','applied',this.checked)">
+                        onchange="updateField('${cnE}','${acc}','applied',this.checked)">
                 </div></td>
+                <td>${brokerSelect(cnE, acc, a.broker || '', !a.applied)}</td>
                 <td><input class="qty-input" type="number" min="0" value="${a.qty || 0}"
-                    onchange="updateField('${cn.replace(/'/g,"\\'")}','${acc}','qty',parseInt(this.value)||0)"
+                    onchange="updateField('${cnE}','${acc}','qty',parseInt(this.value)||0)"
                     ${!a.applied ? 'disabled' : ''}></td>
                 <td><div class="chk-wrap">
                     <input type="checkbox" ${a.refunded ? 'checked' : ''}
-                        onchange="updateField('${cn.replace(/'/g,"\\'")}','${acc}','refunded',this.checked)"
+                        onchange="updateField('${cnE}','${acc}','refunded',this.checked)"
                         ${!a.applied ? 'disabled' : ''}>
                 </div></td>
                 <td>${regBtn}</td>
@@ -260,7 +284,7 @@
             <table class="acc-table">
                 <thead><tr>
                     <th style="text-align:left;padding-left:14px">계좌</th>
-                    <th>신청</th><th>배정수량</th><th>환불</th><th>등록</th>
+                    <th>신청</th><th>증권사</th><th>배정수량</th><th>환불</th><th>등록</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
             </table>
@@ -270,10 +294,11 @@
     async function updateField(corpName, acc, field, value) {
         const item = _items.find(i => i.corpName === corpName);
         if (!item) return;
-        if (!item._accounts[acc]) item._accounts[acc] = { applied: false, qty: 0, refunded: false, registered: false };
+        if (!item._accounts[acc]) item._accounts[acc] = { applied: false, broker: '', qty: 0, refunded: false, registered: false };
         item._accounts[acc][field] = value;
 
         if (field === 'applied' && !value) {
+            item._accounts[acc].broker   = '';
             item._accounts[acc].qty      = 0;
             item._accounts[acc].refunded = false;
         }
@@ -311,6 +336,7 @@
             listingDate:           item.listingDate            || '',
             offeringPrice:         item.offeringPrice ? String(item.offeringPrice) : '',
             accounts:              acc,
+            broker:                a.broker || '',
             soldQty:               a.qty || 0
         };
         sessionStorage.setItem('calendarPrefill', JSON.stringify(prefill));

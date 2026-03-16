@@ -88,9 +88,18 @@
             width: 18px; height: 18px; accent-color: #0d6efd; cursor: pointer;
         }
 
+        /* 증권사 선택 */
+        .broker-sel {
+            width: 72px; border: 1px solid #dee2e6; border-radius: 6px;
+            padding: 4px 4px; font-size: 11px; color: #212529; background: #fff;
+            appearance: none; -webkit-appearance: none; text-align: center;
+        }
+        .broker-sel:focus   { outline: none; border-color: #0d6efd; }
+        .broker-sel:disabled { background: #f8f9fa; color: #adb5bd; }
+
         /* 배정수량 입력 */
         .qty-input {
-            width: 56px; border: 1px solid #dee2e6; border-radius: 6px;
+            width: 50px; border: 1px solid #dee2e6; border-radius: 6px;
             padding: 4px 6px; font-size: 12px; text-align: center;
             color: #212529; background: #fff;
         }
@@ -151,6 +160,7 @@
     let _items    = [];   // 병합된 체크리스트 아이템 목록
     let _filter   = 'active';
     let _dbMap    = {};   // corpName → DB 레코드
+    let _brokers  = [];   // 증권사 목록
 
     // ── 필터 ────────────────────────────────────────────────
     function setFilter(f) {
@@ -172,6 +182,12 @@
 
     // ── 데이터 로드 ─────────────────────────────────────────
     async function loadData() {
+        // 증권사 목록을 먼저 로드
+        if (!_brokers.length) {
+            const fees = await getAllBrokerFees();
+            _brokers = fees.map(f => f.brokerName).sort((a, b) => a.localeCompare(b, 'ko'));
+        }
+
         const [dbItems, sched1, sched2] = await Promise.all([
             getAllChecklists(),
             getKokstockSchedulesByMonth(new Date().getFullYear(), new Date().getMonth() + 1),
@@ -210,8 +226,17 @@
     /** 기본 계좌 상태 구조를 반환합니다. */
     function defaultAccounts() {
         const obj = {};
-        ACCOUNTS.forEach(a => { obj[a] = { applied: false, qty: 0, refunded: false, registered: false }; });
+        ACCOUNTS.forEach(a => { obj[a] = { applied: false, broker: '', qty: 0, refunded: false, registered: false }; });
         return obj;
+    }
+
+    /** 증권사 select HTML을 생성합니다. */
+    function brokerSelect(cnQ, acc, selected, disabled) {
+        const opts = ['', ..._brokers].map(b =>
+            `<option value="${b}" ${b === selected ? 'selected' : ''}>${b || '선택'}</option>`
+        ).join('');
+        return `<select class="broker-sel" ${disabled ? 'disabled' : ''}
+            onchange="updateField('${cnQ}','${acc}','broker',this.value)">${opts}</select>`;
     }
 
     // ── 렌더링 ──────────────────────────────────────────────
@@ -250,8 +275,8 @@
         const sub = [item.subscriptionStartDate, item.subscriptionEndDate].filter(Boolean).join(' ~ ');
 
         const rows = ACCOUNTS.map(acc => {
-            const a    = (item.accounts || {})[acc] || { applied: false, qty: 0, refunded: false, registered: false };
-            const reg  = a.registered;
+            const a   = (item.accounts || {})[acc] || { applied: false, broker: '', qty: 0, refunded: false, registered: false };
+            const reg = a.registered;
             const regBtn = a.qty > 0
                 ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cnQ}','${acc}')" ${reg ? 'disabled' : ''}>
                        ${reg ? '✓등록됨' : '📝등록'}
@@ -264,6 +289,7 @@
                     <input type="checkbox" ${a.applied ? 'checked' : ''}
                         onchange="updateField('${cnQ}','${acc}','applied',this.checked)">
                 </div></td>
+                <td>${brokerSelect(cnQ, acc, a.broker || '', !a.applied)}</td>
                 <td><input class="qty-input" type="number" min="0" value="${a.qty || 0}"
                     onchange="updateField('${cnQ}','${acc}','qty',parseInt(this.value)||0)"
                     ${!a.applied ? 'disabled' : ''}></td>
@@ -290,7 +316,7 @@
             <table class="acc-table">
                 <thead><tr>
                     <th style="text-align:left;padding-left:14px">계좌</th>
-                    <th>신청</th><th>배정수량</th><th>환불</th><th>등록</th>
+                    <th>신청</th><th>증권사</th><th>배정수량</th><th>환불</th><th>등록</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
             </table>
@@ -305,8 +331,9 @@
         if (!item.accounts[acc]) item.accounts[acc] = { applied: false, qty: 0, refunded: false, registered: false };
         item.accounts[acc][field] = value;
 
-        // 신청 해제 시 배정수량/환불도 초기화
+        // 신청 해제 시 증권사/배정수량/환불도 초기화
         if (field === 'applied' && !value) {
+            item.accounts[acc].broker   = '';
             item.accounts[acc].qty      = 0;
             item.accounts[acc].refunded = false;
         }
@@ -332,7 +359,8 @@
             subscriptionEndDate:   item.subscriptionEndDate   || '',
             listingDate:           item.listingDate            || '',
             offeringPrice:         item.offeringPrice ? String(item.offeringPrice) : '',
-            accounts:              acc,       // 해당 계좌만 선택
+            accounts:              acc,
+            broker:                a.broker || '',
             soldQty:               a.qty || 0
         };
 
