@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS ipo_subscription (
     subscription_year       INT          NOT NULL,
     subscription_start_date DATE,
     subscription_end_date   DATE,
-    listing_date            DATE
+    listing_date            DATE,
+    accounts                TEXT         COMMENT '참여 계좌 목록 (쉼표 구분, 예: 경록,지선)'
 );
 
 -- 청약 체크리스트: 계좌별(경록/지선/하준/하민) 신청/배정/환불/등록 상태 관리

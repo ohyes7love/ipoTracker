@@ -17,6 +17,7 @@ public class IpoSubscription {
     private LocalDate subscriptionStartDate;
     private LocalDate subscriptionEndDate;
     private LocalDate listingDate;
+    private String accounts; // 참여 계좌 목록 (쉼표 구분)
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -56,6 +57,10 @@ public class IpoSubscription {
 
     public LocalDate getListingDate() { return listingDate; }
     public void setListingDate(LocalDate listingDate) { this.listingDate = listingDate; }
+
+    /** 참여 계좌 목록 (쉼표 구분, 예: "경록,지선") */
+    public String getAccounts() { return accounts; }
+    public void setAccounts(String accounts) { this.accounts = accounts; }
 
     public Long getProfit() {
         if (soldPrice == null) return null;

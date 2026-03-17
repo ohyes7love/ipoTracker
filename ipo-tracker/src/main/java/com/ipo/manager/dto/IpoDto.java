@@ -19,6 +19,7 @@ public class IpoDto {
     private LocalDate subscriptionStartDate;
     private LocalDate subscriptionEndDate;
     private LocalDate listingDate;
+    private String accounts;
 
     public static IpoDto from(IpoSubscription entity) {
         IpoDto dto = new IpoDto();
@@ -37,6 +38,7 @@ public class IpoDto {
         dto.subscriptionStartDate = entity.getSubscriptionStartDate();
         dto.subscriptionEndDate   = entity.getSubscriptionEndDate();
         dto.listingDate           = entity.getListingDate();
+        dto.accounts              = entity.getAccounts();
         return dto;
     }
 
@@ -55,6 +57,7 @@ public class IpoDto {
         entity.setSubscriptionStartDate(this.subscriptionStartDate);
         entity.setSubscriptionEndDate(this.subscriptionEndDate);
         entity.setListingDate(this.listingDate);
+        entity.setAccounts(this.accounts);
         return entity;
     }
 
@@ -88,4 +91,6 @@ public class IpoDto {
     public void setSubscriptionEndDate(LocalDate subscriptionEndDate) { this.subscriptionEndDate = subscriptionEndDate; }
     public LocalDate getListingDate() { return listingDate; }
     public void setListingDate(LocalDate listingDate) { this.listingDate = listingDate; }
+    public String getAccounts() { return accounts; }
+    public void setAccounts(String accounts) { this.accounts = accounts; }
 }
