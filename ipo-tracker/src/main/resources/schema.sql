@@ -27,7 +27,10 @@ CREATE TABLE IF NOT EXISTS ipo_subscription (
     accounts                TEXT         COMMENT '참여 계좌 목록 (쉼표 구분, 예: 경록,지선)'
 );
 
--- 청약 체크리스트: 계좌별(경록/지선/하준/하민) 신청/배정/환불/등록 상태 관리
+-- 기존 테이블에 accounts 컬럼 추가 (없는 경우에만, continue-on-error=true 로 에러 무시)
+ALTER TABLE ipo_subscription ADD COLUMN accounts TEXT COMMENT '참여 계좌 목록 (쉼표 구분, 예: 경록,지선)';
+
+-- 청약 체크리스트: 계좌별 신청/배정/환불/등록 상태 관리
 CREATE TABLE IF NOT EXISTS ipo_checklist (
     corp_name               VARCHAR(100) NOT NULL PRIMARY KEY,
     kok_idx                 VARCHAR(20),
