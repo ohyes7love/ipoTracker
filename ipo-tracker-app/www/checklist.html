@@ -358,7 +358,7 @@
             subscriptionStartDate: item.subscriptionStartDate || '',
             subscriptionEndDate:   item.subscriptionEndDate   || '',
             listingDate:           item.listingDate            || '',
-            offeringPrice:         item.offeringPrice ? String(item.offeringPrice) : '',
+            offeringPrice:         item.offeringPrice != null ? String(item.offeringPrice) : '',
             accounts:              acc,
             broker:                a.broker || '',
             soldQty:               a.qty || 0

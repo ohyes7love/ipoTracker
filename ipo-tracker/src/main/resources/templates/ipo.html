@@ -513,7 +513,7 @@
         const body = {
             stockName:             document.getElementById('stockName').value,
             broker:                document.getElementById('broker').value,
-            offeringPrice:         parseInt(document.getElementById('offeringPrice').value),
+            offeringPrice:         parseInt(document.getElementById('offeringPrice').value) || 0,
             soldQty:               parseInt(document.getElementById('soldQty').value) || 0,
             soldDate:              document.getElementById('soldDate').value || null,
             soldPrice:             document.getElementById('soldPrice').value
@@ -532,12 +532,18 @@
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
-        }).then(r => r.json()).then(saved => {
+        }).then(r => {
+            if (!r.ok) return r.text().then(t => { throw new Error(t || r.status); });
+            return r.json();
+        }).then(saved => {
             bootstrap.Modal.getInstance(document.getElementById('ipoModal')).hide();
             loadTable(document.getElementById('yearSelect').value);
             if (saved && saved.stockName && !localStocks.find(s => s.stockName === saved.stockName)) {
                 localStocks.push({ stockName: saved.stockName, offeringPrice: saved.offeringPrice });
             }
+        }).catch(e => {
+            console.error('saveIpo error:', e);
+            alert('저장 실패: ' + e.message);
         });
     }
 
