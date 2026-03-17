@@ -144,6 +144,13 @@
                 <div class="text-muted mt-1" style="font-size:12px;">
                     종목명 자동완성에 사용됩니다. 없어도 직접 입력 가능합니다.
                 </div>
+
+                <label class="form-label fw-bold mt-3">계좌 이름</label>
+                <input type="text" class="form-control" id="accountNamesInput"
+                       placeholder="경록, 지선, 하준, 하민">
+                <div class="text-muted mt-1" style="font-size:12px;">
+                    쉼표(,)로 구분하여 입력 — 청약내역·체크리스트·통계에 반영됩니다.
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary w-50" data-bs-dismiss="modal">취소</button>
@@ -222,13 +229,20 @@
 
     function openSettings() {
         document.getElementById('dartKeyInput').value = getDartApiKey();
+        document.getElementById('accountNamesInput').value = getAccountNames().join(', ');
         new bootstrap.Modal(document.getElementById('settingsModal')).show();
     }
 
     function saveSettings() {
         setDartApiKey(document.getElementById('dartKeyInput').value);
+
+        // 계좌 이름 저장 (쉼표 구분 → 배열)
+        const namesRaw = document.getElementById('accountNamesInput').value;
+        const names = namesRaw.split(',').map(s => s.trim()).filter(Boolean);
+        if (names.length) setAccountNames(names);
+
         bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
-        alert('저장되었습니다.');
+        alert('저장되었습니다. 변경된 계좌 이름은 각 화면 재방문 시 반영됩니다.');
     }
 
     document.getElementById('yearSelect').addEventListener('change', function () {

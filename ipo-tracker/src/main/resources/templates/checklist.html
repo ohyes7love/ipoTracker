@@ -131,8 +131,9 @@
     <a href="/stats"><span>📈</span>통계</a>
 </nav>
 
+<script src="/js/common.js"></script>
 <script>
-    const ACCOUNTS = ['경록', '지선', '하준', '하민'];
+    const ACCOUNTS = getAccountNames(); // 설정에서 관리 (common.js: getAccountNames)
 
     let _items   = [];
     let _filter  = 'active';

@@ -155,7 +155,7 @@
 <script src="js/db.js"></script>
 <script src="js/kokstock.js"></script>
 <script>
-    const ACCOUNTS = ['경록', '지선', '하준', '하민'];
+    const ACCOUNTS = getAccountNames(); // 설정에서 관리 (db.js: getAccountNames)
 
     let _items    = [];   // 병합된 체크리스트 아이템 목록
     let _filter   = 'active';

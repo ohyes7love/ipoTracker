@@ -176,12 +176,8 @@
 
                     <div class="mb-3">
                         <label class="form-label">계좌</label>
-                        <div class="account-checks">
-                            <label class="acc-check"><input type="checkbox" name="account" value="경록"> 경록</label>
-                            <label class="acc-check"><input type="checkbox" name="account" value="지선"> 지선</label>
-                            <label class="acc-check"><input type="checkbox" name="account" value="하준"> 하준</label>
-                            <label class="acc-check"><input type="checkbox" name="account" value="하민"> 하민</label>
-                        </div>
+                        <!-- 계좌 체크박스: db.js의 getAccountNames()로 동적 생성 -->
+                        <div class="account-checks" id="accountChecks"></div>
                     </div>
 
                     <div class="row g-2 mb-3">
@@ -256,6 +252,14 @@
     const currentYear = new Date().getFullYear();
     let brokerFees = {};
     let localStocks = [];
+
+    // 계좌 체크박스 동적 생성 (설정에서 변경 가능)
+    (function renderAccountChecks() {
+        document.getElementById('accountChecks').innerHTML =
+            getAccountNames().map(name =>
+                `<label class="acc-check"><input type="checkbox" name="account" value="${name}"> ${name}</label>`
+            ).join('');
+    })();
 
     // 연도 셀렉터
     (function initYearSelect() {
