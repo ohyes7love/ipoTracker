@@ -168,6 +168,25 @@ async function deleteIpo(id) {
     return req2p(db.transaction('ipo_subscription', 'readwrite').objectStore('ipo_subscription').delete(parseInt(id)));
 }
 
+/** 출금완료 여부만 업데이트 (다른 필드 보존) */
+async function patchIpoWithdrawn(id, withdrawn) {
+    const db = await openDB();
+    return new Promise((res, rej) => {
+        const t     = db.transaction('ipo_subscription', 'readwrite');
+        const store = t.objectStore('ipo_subscription');
+        const get   = store.get(parseInt(id));
+        get.onsuccess = e => {
+            const item = e.target.result;
+            if (!item) { res(); return; }
+            item.withdrawn = withdrawn;
+            const put = store.put(item);
+            put.onsuccess = () => res(item);
+            put.onerror   = e => rej(e.target.error);
+        };
+        get.onerror = e => rej(e.target.error);
+    });
+}
+
 async function getMonthlySummary(year) {
     const items = await getIposByYear(year);
     const map = {};
@@ -257,7 +276,7 @@ async function deleteChecklist(corpName) {
 // ── 계좌 이름 관리 ───────────────────────────────────────
 
 /** 기본 계좌 이름 목록 (설정이 없을 때 사용) */
-const _DEFAULT_ACCOUNT_NAMES = ['경록', '지선', '하준', '하민'];
+const _DEFAULT_ACCOUNT_NAMES = ['본인', '아내', '자녀1', '자녀2'];
 
 /**
  * localStorage에서 계좌 이름 목록을 반환합니다.
@@ -288,6 +307,115 @@ function getDartApiKey() {
 
 function setDartApiKey(key) {
     localStorage.setItem('dartApiKey', key.trim());
+}
+
+// ── 백업 / 복원 ──────────────────────────────────────────
+
+/**
+ * 청약내역 + 체크리스트 전체를 JSON 파일로 내보냅니다.
+ * Android(Capacitor): @capacitor/filesystem으로 다운로드 폴더에 저장
+ * 브라우저 fallback: data URI 다운로드
+ */
+async function exportBackup() {
+    const [ipos, checklists] = await Promise.all([getAllIpos(), getAllChecklists()]);
+    const data = {
+        version:      1,
+        exportedAt:   new Date().toISOString(),
+        accountNames: getAccountNames(),
+        ipos,
+        checklists
+    };
+    const jsonStr  = JSON.stringify(data, null, 2);
+    const filename = `ipo-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
+    // ① Capacitor 앱: Filesystem 플러그인으로 저장
+    if (window.Capacitor?.isNativePlatform()) {
+        const { Filesystem } = window.Capacitor.Plugins;
+        try { await Filesystem.requestPermissions(); } catch (_) {}
+
+        // 1순위: 공개 Download 폴더
+        try {
+            await Filesystem.writeFile({
+                path:      `Download/${filename}`,
+                data:      jsonStr,
+                directory: 'EXTERNAL_STORAGE',
+                encoding:  'utf8',
+                recursive: true
+            });
+            alert(`✅ 다운로드 폴더에 저장됐습니다!\n파일명: ${filename}`);
+            return;
+        } catch (e) { console.warn('ExternalStorage 실패, External 시도:', e.message); }
+
+        // 2순위: 앱 전용 외부 폴더
+        try {
+            await Filesystem.writeFile({
+                path:      filename,
+                data:      jsonStr,
+                directory: 'EXTERNAL',
+                encoding:  'utf8',
+                recursive: true
+            });
+            alert(`✅ 저장됐습니다!\n📂 파일 관리자 → 내부저장소 → Android → data → [앱] → files\n파일명: ${filename}`);
+            return;
+        } catch (e2) {
+            alert('저장 실패: ' + e2.message);
+            return;
+        }
+    }
+
+    // ② 브라우저 fallback: data URI 다운로드
+    const a = document.createElement('a');
+    a.href     = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonStr);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+/**
+ * JSON 백업 파일을 읽어 복원합니다.
+ * 기존 데이터는 덮어쓰기 방식으로 병합됩니다.
+ * @param {File} file - input[type=file]에서 선택된 파일
+ * @returns {Promise<{ipos: number, checklists: number}>} 복원된 건수
+ */
+async function importBackup(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async e => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data.version) throw new Error('올바른 백업 파일이 아닙니다.');
+
+                const db = await openDB();
+                let ipoCount = 0, clCount = 0;
+
+                // 청약내역 복원 (기존 id 그대로 put)
+                if (Array.isArray(data.ipos)) {
+                    const t = db.transaction('ipo_subscription', 'readwrite');
+                    const s = t.objectStore('ipo_subscription');
+                    for (const item of data.ipos) { s.put(item); ipoCount++; }
+                    await new Promise(r => { t.oncomplete = r; t.onerror = r; });
+                }
+
+                // 체크리스트 복원
+                if (Array.isArray(data.checklists)) {
+                    const t = db.transaction('ipo_checklist', 'readwrite');
+                    const s = t.objectStore('ipo_checklist');
+                    for (const item of data.checklists) { s.put(item); clCount++; }
+                    await new Promise(r => { t.oncomplete = r; t.onerror = r; });
+                }
+
+                // 계좌 이름 복원
+                if (Array.isArray(data.accountNames) && data.accountNames.length) {
+                    setAccountNames(data.accountNames);
+                }
+
+                resolve({ ipos: ipoCount, checklists: clCount });
+            } catch (err) { reject(err); }
+        };
+        reader.onerror = () => reject(new Error('파일 읽기 실패'));
+        reader.readAsText(file);
+    });
 }
 
 // 캐시: 하루 1회만 DART 호출

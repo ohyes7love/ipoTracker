@@ -152,8 +152,10 @@
     <a href="stats.html"><span>📈</span>통계</a>
 </nav>
 
+<script src="js/swipe.js"></script>
 <script src="js/db.js"></script>
 <script src="js/kokstock.js"></script>
+<script src="js/notifications.js"></script>
 <script>
     const ACCOUNTS = getAccountNames(); // 설정에서 관리 (db.js: getAccountNames)
 
@@ -278,7 +280,7 @@
             const a   = (item.accounts || {})[acc] || { applied: false, broker: '', qty: 0, refunded: false, registered: false };
             const reg = a.registered;
             const regBtn = a.qty > 0
-                ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cnQ}','${acc}')" ${reg ? 'disabled' : ''}>
+                ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cnQ}','${acc}')">
                        ${reg ? '✓등록됨' : '📝등록'}
                    </button>`
                 : `<span style="color:#dee2e6;font-size:11px">-</span>`;
@@ -344,6 +346,11 @@
         // 해당 카드만 다시 렌더
         const cardEl = document.getElementById('card-' + CSS.escape(corpName));
         if (cardEl) cardEl.outerHTML = buildCard(item);
+
+        // 알림 재스케줄 (applied/qty 변경 시)
+        if (field === 'applied' || field === 'qty') {
+            scheduleIpoNotifications().catch(() => {});
+        }
     }
 
     // ── 청약내역 등록 ─────────────────────────────────────────
@@ -359,6 +366,7 @@
             subscriptionEndDate:   item.subscriptionEndDate   || '',
             listingDate:           item.listingDate            || '',
             offeringPrice:         item.offeringPrice != null ? String(item.offeringPrice) : '',
+            kokIdx:                item.kokIdx || '',
             accounts:              acc,
             broker:                a.broker || '',
             soldQty:               a.qty || 0
@@ -389,6 +397,8 @@
         document.getElementById('cardSection').innerHTML =
             `<div class="loading" style="color:#dc3545">로드 실패: ${e.message}</div>`;
     });
+    initTabSwipe();
+    initPullRefresh();
 </script>
 </body>
 </html>

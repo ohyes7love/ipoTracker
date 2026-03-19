@@ -34,7 +34,9 @@
         .filter-bar select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid #ced4da; }
         .filter-bar .btn-add {
             margin-left: auto; background: #0d6efd; color: #fff;
-            border: none; border-radius: 8px; padding: 7px 16px; font-size: 14px; font-weight: 600;
+            border: none; border-radius: 50%; width: 32px; height: 32px;
+            font-size: 22px; font-weight: 400; line-height: 1;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
 
         .ipo-list { padding: 10px 12px; }
@@ -61,18 +63,19 @@
             display: inline-block; background: #e7f1ff; color: #0d6efd;
             border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600; margin-right: 3px;
         }
-        .btn-copy {
-            background: #e8f4fd; color: #0b5ed7; border: 1px solid #9ec5fe;
-            border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+        .ipo-card { cursor: pointer; }
+        .btn-withdraw {
+            background: #fff; color: #198754; border: 1.5px solid #198754;
+            border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; white-space: nowrap;
         }
-        .btn-edit {
-            background: #fff3cd; color: #856404; border: 1px solid #ffc107;
-            border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+        .btn-withdraw.done {
+            background: #d1e7dd; color: #0a3622; border-color: #a3cfbb; cursor: default; font-weight: 600;
         }
-        .btn-del {
-            background: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
-            border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+        .btn-icon {
+            background: none; border: none; font-size: 18px;
+            cursor: pointer; padding: 2px 4px; border-radius: 6px; line-height: 1;
         }
+        .btn-icon:active { background: rgba(0,0,0,0.08); }
         .ipo-card-body { padding: 4px 14px 12px; }
         .info-row { display: flex; flex-wrap: wrap; gap: 4px 16px; color: #555; font-size: 12px; margin-bottom: 4px; }
         .info-row span { white-space: nowrap; }
@@ -84,6 +87,11 @@
         .profit-rate { font-size: 13px; font-weight: 600; }
         .profit-plus { color: #dc3545; }
         .profit-minus { color: #0d6efd; }
+        .dday         { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 1px 5px; vertical-align: middle; }
+        .dday-today   { background: #dc3545; color: #fff; animation: pulse 1.2s infinite; }
+        .dday-soon    { color: #fd7e14; }
+        .dday-past    { color: #adb5bd; font-weight: 400; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
         .profit-zero  { color: #6c757d; }
 
         .total-bar {
@@ -124,6 +132,18 @@
         .modal-body { padding: 14px 16px; max-height: 70vh; overflow-y: auto; }
 
         .empty-state { text-align: center; padding: 48px 0; color: #adb5bd; font-size: 14px; }
+
+        .filter-chips { display: flex; gap: 5px; }
+        .fchip {
+            background: #f0f0f0; color: #555; border: none;
+            border-radius: 16px; padding: 5px 13px; font-size: 12px;
+            cursor: pointer; font-weight: 500; white-space: nowrap;
+        }
+        .fchip.active { background: #0d6efd; color: #fff; font-weight: 700; }
+        .sort-sel {
+            font-size: 12px; padding: 5px 8px; border-radius: 16px;
+            border: 1px solid #ced4da; color: #555; background: #fff;
+        }
     </style>
 </head>
 <body>
@@ -134,7 +154,15 @@
 
 <div class="filter-bar">
     <select id="yearSelect"></select>
-    <button class="btn-add" onclick="openCreateModal()">+ 등록</button>
+    <div class="filter-chips">
+        <button class="fchip active" id="fchipAll"     onclick="setFilter('all')">전체</button>
+        <button class="fchip"        id="fchipPending" onclick="setFilter('pending')">미출금</button>
+    </div>
+    <select class="sort-sel" id="sortSelect" onchange="loadTable(document.getElementById('yearSelect').value)">
+        <option value="date">최신순</option>
+        <option value="profit">수익순</option>
+    </select>
+    <button class="btn-add" onclick="openCreateModal()" title="등록">＋</button>
 </div>
 
 <div class="ipo-list" id="ipoList">
@@ -246,12 +274,21 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/swipe.js"></script>
 <script src="js/kokstock.js"></script>
 <script src="js/db.js"></script>
 <script>
     const currentYear = new Date().getFullYear();
     let brokerFees = {};
     let localStocks = [];
+    let currentFilter = 'all';
+
+    function setFilter(f) {
+        currentFilter = f;
+        document.getElementById('fchipAll').classList.toggle('active', f === 'all');
+        document.getElementById('fchipPending').classList.toggle('active', f === 'pending');
+        loadTable(document.getElementById('yearSelect').value);
+    }
 
     // 계좌 체크박스 동적 생성 (설정에서 변경 가능)
     (function renderAccountChecks() {
@@ -370,6 +407,17 @@
         if (fee !== undefined) document.getElementById('subscriptionFee').value = fee;
     });
 
+    // ── D-Day 유틸 ───────────────────────────────────────
+    const _today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+    function ddayBadge(dateStr) {
+        if (!dateStr) return '';
+        const t = new Date(dateStr); t.setHours(0,0,0,0);
+        const diff = Math.round((t - _today) / 86400000);
+        if (diff === 0) return `<span class="dday dday-today">D-Day</span>`;
+        if (diff  >  0) return `<span class="dday dday-soon">D-${diff}</span>`;
+        return `<span class="dday dday-past">D+${-diff}</span>`;
+    }
+
     // ── 수익 표시 유틸 ───────────────────────────────────
     function fmt(v) { return v != null ? Number(v).toLocaleString() : '-'; }
     function profitClass(p) {
@@ -380,8 +428,18 @@
 
     // ── 목록 로드 ────────────────────────────────────────
     async function loadTable(year) {
-        const list = (await getIposByYear(year))
-            .sort((a, b) => (b.listingDate || '').localeCompare(a.listingDate || ''));
+        let list = await getIposByYear(year);
+
+        // 필터
+        if (currentFilter === 'pending') list = list.filter(d => !d.withdrawn);
+
+        // 정렬
+        const sort = document.getElementById('sortSelect')?.value || 'date';
+        if (sort === 'profit') {
+            list.sort((a, b) => (b.profit ?? -Infinity) - (a.profit ?? -Infinity));
+        } else {
+            list.sort((a, b) => (b.listingDate || '').localeCompare(a.listingDate || ''));
+        }
         const container = document.getElementById('ipoList');
         const totalEl   = document.getElementById('totalSum');
 
@@ -403,19 +461,24 @@
             if (d.profit != null) totalProfit += d.profit;
 
             const dataStr = JSON.stringify(d).replace(/'/g, '&#39;');
-            html += `<div class="ipo-card">
+            const isWithdrawn = !!d.withdrawn;
+            html += `<div class="ipo-card" onclick='openEditModal(${dataStr})'>
   <div class="ipo-card-header">
     <span class="stock-name">${d.stockName}</span>
-    <div class="card-actions">
-      <button class="btn-copy" onclick='openCopyModal(${dataStr})'>복사</button>
-      <button class="btn-edit" onclick='openEditModal(${dataStr})'>수정</button>
-      <button class="btn-del"  onclick="deleteItem(${d.id})">삭제</button>
+    <div class="card-actions" onclick="event.stopPropagation()">
+      <button class="btn-withdraw ${isWithdrawn ? 'done' : ''}"
+              onclick="${isWithdrawn ? '' : `toggleWithdrawn(${d.id})`}"
+              ${isWithdrawn ? 'disabled' : ''}>
+        ${isWithdrawn ? '✅ 출금완료' : '💸 출금'}
+      </button>
+      <button class="btn-icon" onclick='openCopyModal(${dataStr})' title="복사">📋</button>
+      <button class="btn-icon" onclick='deleteItem(${d.id})' title="삭제">🗑️</button>
     </div>
   </div>
   <div class="ipo-card-body">
     <div class="info-row">
       <span>🏢 ${d.broker}</span>
-      <span>📅 ${d.soldDate || '미매도'}</span>
+      ${d.listingDate ? `<span>📅 상장 ${d.listingDate.slice(5).replace('-','/')} ${ddayBadge(d.listingDate)}</span>` : ''}
     </div>
     ${d.accounts ? `<div class="info-row">${d.accounts.split(',').map(a => `<span class="acc-tag">${a.trim()}</span>`).join('')}</div>` : ''}
     <div class="info-row">
@@ -529,6 +592,12 @@
         }
     }
 
+    async function toggleWithdrawn(id) {
+        if (!confirm('출금 처리하시겠습니까?\n(취소하려면 수정 버튼을 이용하세요)')) return;
+        await patchIpoWithdrawn(id, true);
+        loadTable(document.getElementById('yearSelect').value);
+    }
+
     async function deleteItem(id) {
         if (!confirm('삭제하시겠습니까?')) return;
         await deleteIpo(id);
@@ -539,6 +608,10 @@
         loadTable(this.value);
     });
 
+    // 대시보드 미출금 카드에서 넘어온 경우
+    if (new URLSearchParams(location.search).get('filter') === 'pending') {
+        setFilter('pending');
+    }
     loadTable(currentYear);
 
     // ── 캘린더/체크리스트에서 넘어온 경우 자동 등록 모달 오픈 ──
@@ -565,14 +638,32 @@
                 if (p.subscriptionStartDate) document.getElementById('subscriptionStartDate').value = p.subscriptionStartDate;
                 if (p.subscriptionEndDate)   document.getElementById('subscriptionEndDate').value   = p.subscriptionEndDate;
                 if (p.listingDate)           document.getElementById('listingDate').value           = p.listingDate;
-                if (p.offeringPrice)         document.getElementById('offeringPrice').value         = p.offeringPrice;
-                if (p.broker)                document.getElementById('broker').value                = p.broker;
                 if (p.soldQty)               document.getElementById('soldQty').value               = p.soldQty;
+
+                // 공모가: 이미 값이 있으면 사용, 없으면 kokIdx로 상세조회
+                if (p.offeringPrice && p.offeringPrice !== '0') {
+                    document.getElementById('offeringPrice').value = p.offeringPrice;
+                } else if (p.kokIdx) {
+                    getKokstockDetail(p.kokIdx).then(d => {
+                        const price = ((d.info || {})['확정공모가'] || '').replace(/[^0-9]/g, '');
+                        if (price) document.getElementById('offeringPrice').value = price;
+                    }).catch(() => {});
+                }
+
+                // 증권사 + 청약수수료 자동 세팅
+                if (p.broker) {
+                    document.getElementById('broker').value = p.broker;
+                    const fee = brokerFees[p.broker];
+                    if (fee !== undefined) document.getElementById('subscriptionFee').value = fee;
+                }
+
                 setAccounts(p.accounts || '');
                 new bootstrap.Modal(document.getElementById('ipoModal')).show();
             }, 300);
         } catch (e) { console.warn('prefill parse error', e); }
     })();
+    initTabSwipe();
+    initPullRefresh();
 </script>
 </body>
 </html>

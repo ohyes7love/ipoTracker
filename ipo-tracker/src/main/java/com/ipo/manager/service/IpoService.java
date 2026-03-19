@@ -97,6 +97,11 @@ public class IpoService {
         repository.deleteById(id);
     }
 
+    /** 출금완료 여부 업데이트 */
+    public void updateWithdrawn(Long id, boolean withdrawn) {
+        repository.updateWithdrawn(id, withdrawn);
+    }
+
     /**
      * 월별 수익 집계
      * <p>매도 완료(soldDate 존재)된 건만 집계하며, 미매도 건은 제외합니다.</p>

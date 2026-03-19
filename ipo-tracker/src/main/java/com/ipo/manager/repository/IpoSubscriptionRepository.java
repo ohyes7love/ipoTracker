@@ -14,5 +14,6 @@ public interface IpoSubscriptionRepository {
     IpoSubscription findById(@Param("id") Long id);
     void insert(IpoSubscription entity);
     void update(IpoSubscription entity);
+    void updateWithdrawn(@Param("id") Long id, @Param("withdrawn") boolean withdrawn);
     void deleteById(@Param("id") Long id);
 }

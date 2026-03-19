@@ -22,6 +22,7 @@ import java.util.List;
  *   DELETE /api/ipo/{id}             → 청약 내역 삭제
  *   GET    /api/ipo/monthly?year=    → 월별 수익 집계
  *   GET    /api/ipo/stocks           → 종목명 자동완성용 목록
+ *   PATCH  /api/ipo/{id}/withdrawn   → 출금완료 여부 업데이트
  * </pre>
  */
 @RestController
@@ -70,6 +71,13 @@ public class IpoApiController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         ipoService.delete(id);
         return ResponseEntity.ok().build();
+    }
+
+    /** 출금완료 여부 업데이트 */
+    @PatchMapping("/{id}/withdrawn")
+    public ResponseEntity<Void> updateWithdrawn(@PathVariable Long id, @RequestParam boolean withdrawn) {
+        ipoService.updateWithdrawn(id, withdrawn);
+        return ResponseEntity.noContent().build();
     }
 
     /**

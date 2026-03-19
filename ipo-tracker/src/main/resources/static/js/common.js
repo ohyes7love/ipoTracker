@@ -6,7 +6,7 @@
  */
 
 /** 기본 계좌 이름 목록 (설정이 없을 때 사용) */
-const _DEFAULT_ACCOUNT_NAMES = ['경록', '지선', '하준', '하민'];
+const _DEFAULT_ACCOUNT_NAMES = ['본인', '아내', '자녀1', '자녀2'];
 
 /**
  * localStorage에서 계좌 이름 목록을 반환합니다.

@@ -183,6 +183,7 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/swipe.js"></script>
 <script>
     const todayDate = new Date();
     let curYear  = todayDate.getFullYear() < 2026 ? 2026 : todayDate.getFullYear();
@@ -430,6 +431,8 @@
     }
 
     renderCalendar();
+    initCalendarSwipe('calWrapper');
+    initPullRefresh();
 </script>
 </body>
 </html>

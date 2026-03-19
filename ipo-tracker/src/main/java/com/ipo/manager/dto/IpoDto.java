@@ -20,6 +20,7 @@ public class IpoDto {
     private LocalDate subscriptionEndDate;
     private LocalDate listingDate;
     private String accounts;
+    private boolean withdrawn;
 
     public static IpoDto from(IpoSubscription entity) {
         IpoDto dto = new IpoDto();
@@ -39,6 +40,7 @@ public class IpoDto {
         dto.subscriptionEndDate   = entity.getSubscriptionEndDate();
         dto.listingDate           = entity.getListingDate();
         dto.accounts              = entity.getAccounts();
+        dto.withdrawn             = entity.isWithdrawn();
         return dto;
     }
 
@@ -58,6 +60,7 @@ public class IpoDto {
         entity.setSubscriptionEndDate(this.subscriptionEndDate);
         entity.setListingDate(this.listingDate);
         entity.setAccounts(this.accounts);
+        entity.setWithdrawn(this.withdrawn);
         return entity;
     }
 
@@ -93,4 +96,6 @@ public class IpoDto {
     public void setListingDate(LocalDate listingDate) { this.listingDate = listingDate; }
     public String getAccounts() { return accounts; }
     public void setAccounts(String accounts) { this.accounts = accounts; }
+    public boolean isWithdrawn() { return withdrawn; }
+    public void setWithdrawn(boolean withdrawn) { this.withdrawn = withdrawn; }
 }

@@ -131,6 +131,7 @@
     <a href="/stats"><span>📈</span>통계</a>
 </nav>
 
+<script src="/js/swipe.js"></script>
 <script src="/js/common.js"></script>
 <script>
     const ACCOUNTS = getAccountNames(); // 설정에서 관리 (common.js: getAccountNames)
@@ -247,7 +248,7 @@
             const cnE = cn.replace(/'/g, "\\'");
             const reg = a.registered;
             const regBtn = a.qty > 0
-                ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cnE}','${acc}')" ${reg ? 'disabled' : ''}>
+                ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cnE}','${acc}')">
                        ${reg ? '✓등록됨' : '📝등록'}
                    </button>`
                 : `<span style="color:#dee2e6;font-size:11px">-</span>`;
@@ -336,6 +337,7 @@
             subscriptionEndDate:   item.subscriptionEndDate   || '',
             listingDate:           item.listingDate            || '',
             offeringPrice:         item.offeringPrice != null ? String(item.offeringPrice) : '',
+            kokIdx:                item.kokIdx || '',
             accounts:              acc,
             broker:                a.broker || '',
             soldQty:               a.qty || 0
@@ -362,6 +364,8 @@
         document.getElementById('cardSection').innerHTML =
             `<div class="loading" style="color:#dc3545">로드 실패: ${e.message}</div>`;
     });
+    initTabSwipe();
+    initPullRefresh();
 </script>
 </body>
 </html>

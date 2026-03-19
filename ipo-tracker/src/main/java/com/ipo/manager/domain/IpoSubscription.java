@@ -17,7 +17,8 @@ public class IpoSubscription {
     private LocalDate subscriptionStartDate;
     private LocalDate subscriptionEndDate;
     private LocalDate listingDate;
-    private String accounts; // 참여 계좌 목록 (쉼표 구분)
+    private String accounts;  // 참여 계좌 목록 (쉼표 구분)
+    private boolean withdrawn; // 출금완료 여부
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -61,6 +62,9 @@ public class IpoSubscription {
     /** 참여 계좌 목록 (쉼표 구분, 예: "경록,지선") */
     public String getAccounts() { return accounts; }
     public void setAccounts(String accounts) { this.accounts = accounts; }
+
+    public boolean isWithdrawn() { return withdrawn; }
+    public void setWithdrawn(boolean withdrawn) { this.withdrawn = withdrawn; }
 
     public Long getProfit() {
         if (soldPrice == null) return null;

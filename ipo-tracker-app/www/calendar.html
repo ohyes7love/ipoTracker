@@ -165,6 +165,7 @@
     <a href="stats.html"><span>📈</span>통계</a>
 </nav>
 
+<script src="js/swipe.js"></script>
 <script src="js/kokstock.js"></script>
 <script src="js/db.js"></script>
 <script>
@@ -375,6 +376,8 @@
     }
 
     renderCalendar();
+    initCalendarSwipe('calWrapper');
+    initPullRefresh();
 </script>
 </body>
 </html>
