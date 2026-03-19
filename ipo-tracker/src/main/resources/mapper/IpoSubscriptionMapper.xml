@@ -1,10 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    IpoSubscriptionMapper.xml - 공모주 청약 내역 MyBatis 매퍼
+
+    ipo_subscription 테이블에 대한 CRUD SQL을 정의합니다.
+    namespace는 IpoSubscriptionRepository 인터페이스와 연결됩니다.
+
+    테이블 구조 (ipo_subscription):
+      id                     BIGINT AUTO_INCREMENT PRIMARY KEY
+      stock_name             VARCHAR   - 종목명
+      broker                 VARCHAR   - 청약 증권사
+      offering_price         BIGINT    - 확정 공모가 (원)
+      sold_qty               INT       - 배정 수량 (주)
+      sold_date              DATE      - 매도 날짜 (미매도 시 NULL)
+      sold_price             BIGINT    - 매도 가격 (원, 미매도 시 NULL)
+      tax_and_fee            BIGINT    - 세금/수수료 합계 (원)
+      subscription_fee       BIGINT    - 청약수수료 (원)
+      subscription_year      INT       - 청약 연도 (상장일 기준)
+      subscription_start_date DATE     - 청약 시작일
+      subscription_end_date   DATE     - 청약 마감일
+      listing_date           DATE      - 상장일
+      accounts               VARCHAR   - 참여 계좌 목록 (쉼표 구분)
+      withdrawn              BOOLEAN   - 출금완료 여부
+-->
 <mapper namespace="com.ipo.manager.repository.IpoSubscriptionRepository">
 
+    <!--
+        ResultMap: DB 컬럼명 ↔ IpoSubscription 자바 필드 매핑 정의
+        스네이크_케이스(DB) → 카멜케이스(Java) 변환을 명시적으로 처리합니다.
+    -->
     <resultMap id="ipoResultMap" type="com.ipo.manager.domain.IpoSubscription">
+        <!-- PK 컬럼 매핑 -->
         <id     property="id"                    column="id"/>
+        <!-- 일반 컬럼 매핑 -->
         <result property="stockName"             column="stock_name"/>
         <result property="broker"                column="broker"/>
         <result property="offeringPrice"         column="offering_price"/>
@@ -13,6 +43,7 @@
         <result property="soldPrice"             column="sold_price"/>
         <result property="taxAndFee"             column="tax_and_fee"/>
         <result property="subscriptionFee"       column="subscription_fee"/>
+        <!-- subscription_year 컬럼 → year 필드 매핑 (컬럼명과 필드명 불일치) -->
         <result property="year"                  column="subscription_year"/>
         <result property="subscriptionStartDate" column="subscription_start_date"/>
         <result property="subscriptionEndDate"   column="subscription_end_date"/>
@@ -21,6 +52,10 @@
         <result property="withdrawn"             column="withdrawn"/>
     </resultMap>
 
+    <!--
+        전체 청약 내역 조회
+        ID 내림차순 정렬로 최신 항목이 상단에 위치합니다.
+    -->
     <select id="findAll" resultMap="ipoResultMap">
         SELECT id, stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
                tax_and_fee, subscription_fee, subscription_year,
@@ -29,6 +64,11 @@
         ORDER BY id DESC
     </select>
 
+    <!--
+        연도별 청약 내역 조회
+        subscription_year 컬럼을 기준으로 특정 연도의 데이터만 필터링합니다.
+        @param year 조회할 연도
+    -->
     <select id="findByYear" resultMap="ipoResultMap">
         SELECT id, stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
                tax_and_fee, subscription_fee, subscription_year,
@@ -38,6 +78,12 @@
         ORDER BY id DESC
     </select>
 
+    <!--
+        매도 완료 청약 내역 조회 (월별 수익 집계용)
+        월별 수익 집계 시 미매도(sold_date IS NULL) 건을 제외하기 위해
+        sold_date IS NOT NULL 조건을 추가합니다.
+        @param year 조회할 연도
+    -->
     <select id="findByYearWithSoldDate" resultMap="ipoResultMap">
         SELECT id, stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
                tax_and_fee, subscription_fee, subscription_year,
@@ -47,6 +93,10 @@
           AND sold_date IS NOT NULL
     </select>
 
+    <!--
+        단건 청약 내역 조회 (수정용)
+        @param id 조회할 청약 내역의 고유 ID
+    -->
     <select id="findById" resultMap="ipoResultMap">
         SELECT id, stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
                tax_and_fee, subscription_fee, subscription_year,
@@ -55,6 +105,12 @@
         WHERE id = #{id}
     </select>
 
+    <!--
+        청약 내역 신규 등록
+        useGeneratedKeys="true"와 keyProperty="id"를 설정하여
+        INSERT 후 DB가 생성한 AUTO_INCREMENT 키를 entity.id에 자동으로 주입합니다.
+        @param entity 등록할 IpoSubscription 엔티티
+    -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO ipo_subscription
             (stock_name, broker, offering_price, sold_qty, sold_date, sold_price,
@@ -66,6 +122,12 @@
              #{subscriptionStartDate}, #{subscriptionEndDate}, #{listingDate}, #{accounts}, #{withdrawn})
     </insert>
 
+    <!--
+        청약 내역 전체 수정
+        accounts 필드는 accounts 컬럼에만 저장하며 withdrawn은 별도 PATCH API로 처리하므로
+        이 UPDATE 구문에는 withdrawn 컬럼이 포함되지 않습니다.
+        @param entity 수정할 데이터가 담긴 IpoSubscription 엔티티 (id 필수)
+    -->
     <update id="update">
         UPDATE ipo_subscription SET
             stock_name              = #{stockName},
@@ -84,10 +146,21 @@
         WHERE id = #{id}
     </update>
 
+    <!--
+        출금완료 여부 단일 컬럼 업데이트
+        withdrawn 컬럼만 변경하는 부분 업데이트입니다.
+        전체 UPDATE를 피해 불필요한 컬럼 변경을 방지합니다.
+        @param id        업데이트할 청약 내역의 고유 ID
+        @param withdrawn 변경할 출금완료 여부 (true/false)
+    -->
     <update id="updateWithdrawn">
         UPDATE ipo_subscription SET withdrawn = #{withdrawn} WHERE id = #{id}
     </update>
 
+    <!--
+        청약 내역 삭제
+        @param id 삭제할 청약 내역의 고유 ID
+    -->
     <delete id="deleteById">
         DELETE FROM ipo_subscription WHERE id = #{id}
     </delete>

@@ -27,13 +27,14 @@
             position: sticky; top: 0; z-index: 100;
         }
         .top-bar h1 { font-size: 16px; margin: 0; font-weight: 700; }
+        /* 동기화 버튼: 비활성화 시 반투명 처리 */
         .btn-sync {
             background: rgba(255,255,255,0.2); color: #fff; border: none;
             border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
         }
         .btn-sync:disabled { opacity: 0.5; }
 
-        /* ── 필터 탭 ── */
+        /* ── 필터 탭 (청약중 / 배정대기 / 상장예정 / 전체) ── */
         .filter-tabs {
             display: flex; background: #fff;
             border-bottom: 1px solid #e0e0e0; overflow-x: auto;
@@ -43,6 +44,7 @@
             font-weight: 600; color: #888; border-bottom: 2px solid transparent;
             cursor: pointer; white-space: nowrap; min-width: 60px;
         }
+        /* 활성 탭: 파란색 밑줄 + 텍스트 */
         .filter-tab.active { color: #0d6efd; border-bottom-color: #0d6efd; }
 
         /* ── 공모주 카드 ── */
@@ -51,6 +53,7 @@
             background: #fff; border-radius: 14px;
             box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 12px; overflow: hidden;
         }
+        /* 카드 헤더: 종목명, 일정, 상태 뱃지 */
         .card-hdr {
             padding: 12px 14px 8px; display: flex; align-items: flex-start;
             justify-content: space-between; border-bottom: 1px solid #f0f0f0;
@@ -59,16 +62,18 @@
         .corp-name { font-size: 15px; font-weight: 700; color: #212529; }
         .card-dates { font-size: 11px; color: #888; margin-top: 3px; line-height: 1.7; }
         .card-dates span { display: inline-block; margin-right: 8px; }
+        /* 상태 뱃지 기본 스타일 */
         .progress-badge {
             font-size: 10px; font-weight: 700; padding: 3px 8px;
             border-radius: 10px; flex-shrink: 0; margin-top: 2px;
         }
-        .badge-active   { background: #e8f5e9; color: #2e7d32; }
-        .badge-waiting  { background: #fff3e0; color: #e65100; }
-        .badge-listing  { background: #e3f2fd; color: #1565c0; }
-        .badge-done     { background: #f5f5f5; color: #9e9e9e; }
+        /* 상태별 뱃지 컬러 */
+        .badge-active   { background: #e8f5e9; color: #2e7d32; }   /* 청약중: 초록 */
+        .badge-waiting  { background: #fff3e0; color: #e65100; }   /* 배정대기: 주황 */
+        .badge-listing  { background: #e3f2fd; color: #1565c0; }   /* 상장예정: 파랑 */
+        .badge-done     { background: #f5f5f5; color: #9e9e9e; }   /* 종료: 회색 */
 
-        /* ── 계좌 테이블 ── */
+        /* ── 계좌별 체크 테이블 ── */
         .acc-table { width: 100%; border-collapse: collapse; }
         .acc-table th {
             background: #f8f9fa; font-size: 10px; color: #888; font-weight: 600;
@@ -79,60 +84,76 @@
             border-bottom: 1px solid #f5f5f5; vertical-align: middle;
         }
         .acc-table tr:last-child td { border-bottom: none; }
+        /* 계좌명 셀: 미신청이면 회색으로 흐림 처리 */
         .acc-name-cell { font-size: 12px; font-weight: 700; color: #333; text-align: left; padding-left: 14px; }
         .acc-name-cell.inactive { color: #bbb; }
 
-        /* 체크박스 스타일 */
+        /* ── 청약신청 체크박스 스타일 ── */
         .chk-wrap { display: flex; justify-content: center; align-items: center; }
         .chk-wrap input[type=checkbox] {
             width: 18px; height: 18px; accent-color: #0d6efd; cursor: pointer;
         }
 
-        /* 증권사 선택 */
+        /* ── 증권사 선택 드롭다운 ── */
         .broker-sel {
             width: 72px; border: 1px solid #dee2e6; border-radius: 6px;
             padding: 4px 4px; font-size: 11px; color: #212529; background: #fff;
             appearance: none; -webkit-appearance: none; text-align: center;
         }
         .broker-sel:focus   { outline: none; border-color: #0d6efd; }
+        /* 미신청 계좌의 증권사 선택은 비활성화 */
         .broker-sel:disabled { background: #f8f9fa; color: #adb5bd; }
 
-        /* 배정수량 입력 */
+        /* ── 배정수량 입력 필드 ── */
         .qty-input {
             width: 50px; border: 1px solid #dee2e6; border-radius: 6px;
             padding: 4px 6px; font-size: 12px; text-align: center;
             color: #212529; background: #fff;
         }
         .qty-input:focus { outline: none; border-color: #0d6efd; }
+        /* 미신청 계좌의 수량 입력은 비활성화 */
         .qty-input:disabled { background: #f8f9fa; color: #adb5bd; }
 
-        /* 청약내역 등록 버튼 */
+        /* ── 청약내역 등록 버튼 ── */
         .btn-reg {
             background: #0d6efd; color: #fff; border: none;
             border-radius: 6px; padding: 5px 8px; font-size: 10px;
             font-weight: 700; cursor: pointer; white-space: nowrap;
         }
+        /* 배정 수량 0이면 비활성화 */
         .btn-reg:disabled { background: #adb5bd; cursor: default; }
+        /* 이미 청약내역에 등록된 경우 초록색 */
         .btn-reg.done { background: #198754; }
 
-        /* 빈 상태 */
+        /* ── 빈 상태 ── */
         .empty-state {
             text-align: center; padding: 50px 20px; color: #adb5bd;
             font-size: 13px; line-height: 2;
         }
         .empty-icon { font-size: 40px; display: block; margin-bottom: 8px; }
 
-        /* 로딩 */
+        /* ── 로딩 표시 ── */
         .loading { text-align: center; padding: 40px; color: #adb5bd; font-size: 13px; }
     </style>
 </head>
 <body>
 
+<!-- ════════════════════════════════════════════
+     상단 타이틀 바
+     - 동기화 버튼: kokstock 캐시 강제 갱신 후 재로드
+     ════════════════════════════════════════════ -->
 <div class="top-bar">
     <h1>✅ 청약 체크리스트</h1>
     <button class="btn-sync" id="syncBtn" onclick="doSync()">🔄 동기화</button>
 </div>
 
+<!-- ════════════════════════════════════════════
+     필터 탭
+     - 청약중: 현재 청약 진행 중인 종목
+     - 배정대기: 청약 종료 후 상장 전 대기 중
+     - 상장예정: 상장일이 아직 지나지 않은 종목
+     - 전체: 필터 없이 모두 표시
+     ════════════════════════════════════════════ -->
 <div class="filter-tabs">
     <div class="filter-tab active" data-filter="active"  onclick="setFilter('active')">청약중</div>
     <div class="filter-tab"        data-filter="waiting" onclick="setFilter('waiting')">배정대기</div>
@@ -140,10 +161,17 @@
     <div class="filter-tab"        data-filter="all"     onclick="setFilter('all')">전체</div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     공모주 카드 목록 컨테이너
+     - renderCards()에 의해 동적으로 렌더링됨
+     ════════════════════════════════════════════ -->
 <div class="section" id="cardSection">
     <div class="loading">kokstock 일정을 불러오는 중...</div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     하단 탭 네비게이션
+     ════════════════════════════════════════════ -->
 <nav class="bottom-nav">
     <a href="index.html"><span>📊</span>대시보드</a>
     <a href="ipo.html"><span>📋</span>청약내역</a>
@@ -157,23 +185,37 @@
 <script src="js/kokstock.js"></script>
 <script src="js/notifications.js"></script>
 <script>
-    const ACCOUNTS = getAccountNames(); // 설정에서 관리 (db.js: getAccountNames)
+    // 설정에서 관리하는 계좌 이름 목록 (db.js: getAccountNames)
+    const ACCOUNTS = getAccountNames();
 
-    let _items    = [];   // 병합된 체크리스트 아이템 목록
-    let _filter   = 'active';
-    let _dbMap    = {};   // corpName → DB 레코드
-    let _brokers  = [];   // 증권사 목록
+    let _items    = [];   // kokstock 일정 + DB 데이터가 병합된 체크리스트 아이템 목록
+    let _filter   = 'active'; // 현재 활성 필터: 'active' | 'waiting' | 'listing' | 'all'
+    let _dbMap    = {};   // corpName → DB 레코드 (빠른 조회용 맵)
+    let _brokers  = [];   // 증권사 이름 목록 (brokerSelect에 사용)
 
     // ── 필터 ────────────────────────────────────────────────
+    /**
+     * 탭 필터를 변경하고 카드 목록을 다시 렌더링합니다.
+     * @param {string} f - 'active' | 'waiting' | 'listing' | 'all'
+     */
     function setFilter(f) {
         _filter = f;
+        // 모든 탭에서 active 클래스 제거 후 선택된 탭에만 추가
         document.querySelectorAll('.filter-tab').forEach(t => {
             t.classList.toggle('active', t.dataset.filter === f);
         });
         renderCards();
     }
 
-    /** 오늘 날짜 기준으로 종목 상태를 반환합니다. */
+    /**
+     * 오늘 날짜 기준으로 종목의 상태를 반환합니다.
+     * - active: 청약 기간 중 (subscriptionStartDate <= today <= subscriptionEndDate)
+     * - waiting: 청약 종료 후 상장 전 (subscriptionEndDate < today, listingDate > today)
+     * - listing: 상장일이 미래 (listingDate > today)
+     * - done: 상장일이 지남 (종료)
+     * @param {Object} item - 체크리스트 아이템 객체
+     * @returns {string} 상태 문자열
+     */
     function getStatus(item) {
         const today = new Date().toISOString().slice(0, 10);
         if (item.subscriptionStartDate <= today && today <= item.subscriptionEndDate) return 'active';   // 청약중
@@ -183,13 +225,21 @@
     }
 
     // ── 데이터 로드 ─────────────────────────────────────────
+    /**
+     * 체크리스트 화면의 모든 데이터를 로드합니다.
+     * 1. 증권사 목록 로드 (처음 한 번만)
+     * 2. DB 체크리스트 + 이번 달 / 다음 달 kokstock 일정을 병렬 조회
+     * 3. 두 데이터를 종목명 기준으로 병합하여 _items 구성
+     * 4. renderCards() 호출로 화면 갱신
+     */
     async function loadData() {
-        // 증권사 목록을 먼저 로드
+        // 증권사 목록을 먼저 로드 (한 번만 로드)
         if (!_brokers.length) {
             const fees = await getAllBrokerFees();
             _brokers = fees.map(f => f.brokerName).sort((a, b) => a.localeCompare(b, 'ko'));
         }
 
+        // 이번 달과 다음 달 일정을 병렬로 조회 (다음 달: 12월이면 내년 1월)
         const [dbItems, sched1, sched2] = await Promise.all([
             getAllChecklists(),
             getKokstockSchedulesByMonth(new Date().getFullYear(), new Date().getMonth() + 1),
@@ -199,11 +249,11 @@
             )
         ]);
 
-        // DB 맵 구성 (corpName → 레코드)
+        // DB 맵 구성 (corpName → 레코드): 빠른 조회를 위한 인덱스
         _dbMap = {};
         dbItems.forEach(d => { _dbMap[d.corpName] = d; });
 
-        // kokstock 일정과 DB 데이터 병합
+        // kokstock 일정과 DB 데이터 병합 (중복 종목 제거)
         const seen = new Set();
         _items = [];
         for (const s of [...sched1, ...sched2]) {
@@ -213,11 +263,12 @@
             const db = _dbMap[s.corpName];
             _items.push({
                 corpName:             s.corpName,
-                kokIdx:               s.idx || '',
+                kokIdx:               s.idx || '',        // kokstock 상세 조회용 idx
                 subscriptionStartDate: s.subscriptionStartDate || '',
                 subscriptionEndDate:   s.subscriptionEndDate   || '',
                 listingDate:           s.listingDate            || '',
                 offeringPrice:         db ? db.offeringPrice : 0,
+                // DB에 저장된 계좌별 상태가 있으면 사용, 없으면 기본값
                 accounts:              db ? db.accounts : defaultAccounts()
             });
         }
@@ -225,14 +276,26 @@
         renderCards();
     }
 
-    /** 기본 계좌 상태 구조를 반환합니다. */
+    /**
+     * 계좌별 기본 상태 구조를 반환합니다.
+     * 모든 계좌를 미신청(applied: false) 상태로 초기화합니다.
+     * @returns {Object} { 계좌명: { applied, broker, qty, refunded, registered } }
+     */
     function defaultAccounts() {
         const obj = {};
         ACCOUNTS.forEach(a => { obj[a] = { applied: false, broker: '', qty: 0, refunded: false, registered: false }; });
         return obj;
     }
 
-    /** 증권사 select HTML을 생성합니다. */
+    /**
+     * 증권사 선택 드롭다운 HTML을 생성합니다.
+     * onchange 시 updateField()를 호출하여 DB에 저장합니다.
+     * @param {string} cnQ - 종목명 (onclick 속성용, 특수문자 이스케이프됨)
+     * @param {string} acc - 계좌명
+     * @param {string} selected - 현재 선택된 증권사명
+     * @param {boolean} disabled - 비활성화 여부 (미신청 계좌)
+     * @returns {string} select HTML 문자열
+     */
     function brokerSelect(cnQ, acc, selected, disabled) {
         const opts = ['', ..._brokers].map(b =>
             `<option value="${b}" ${b === selected ? 'selected' : ''}>${b || '선택'}</option>`
@@ -242,15 +305,21 @@
     }
 
     // ── 렌더링 ──────────────────────────────────────────────
+    /**
+     * 현재 필터에 맞는 공모주 카드 목록을 화면에 렌더링합니다.
+     * 데이터가 없으면 빈 상태 메시지를 표시합니다.
+     */
     function renderCards() {
         const section = document.getElementById('cardSection');
         const today   = new Date().toISOString().slice(0, 10);
 
+        // 필터 적용: 'all'이면 전체, 아니면 getStatus() 결과 비교
         let filtered = _items;
         if (_filter !== 'all') {
             filtered = _items.filter(i => getStatus(i) === _filter);
         }
 
+        // 빈 상태 처리
         if (!filtered.length) {
             section.innerHTML = `<div class="empty-state">
                 <span class="empty-icon">📋</span>
@@ -260,9 +329,15 @@
             return;
         }
 
+        // 각 아이템을 카드 HTML로 변환하여 렌더링
         section.innerHTML = filtered.map(item => buildCard(item)).join('');
     }
 
+    /**
+     * 종목의 현재 상태에 맞는 뱃지 HTML을 반환합니다.
+     * @param {Object} item - 체크리스트 아이템 객체
+     * @returns {string} 뱃지 HTML 문자열
+     */
     function statusBadge(item) {
         const s = getStatus(item);
         if (s === 'active')  return '<span class="progress-badge badge-active">청약중</span>';
@@ -271,14 +346,25 @@
         return '<span class="progress-badge badge-done">종료</span>';
     }
 
+    /**
+     * 단일 공모주 카드 HTML을 생성합니다.
+     * 카드 구조:
+     * - 헤더: 종목명, 청약/상장 일정, 상태 뱃지
+     * - 테이블: 계좌별 체크(신청/증권사/배정수량/환불/등록) 행
+     * @param {Object} item - 체크리스트 아이템 객체
+     * @returns {string} 카드 HTML 문자열
+     */
     function buildCard(item) {
         const cn  = item.corpName;
+        // onclick 속성에 안전하게 사용하기 위해 단따옴표 이스케이프
         const cnQ = cn.replace(/'/g, "\\'");
         const sub = [item.subscriptionStartDate, item.subscriptionEndDate].filter(Boolean).join(' ~ ');
 
+        // 각 계좌별 테이블 행 생성
         const rows = ACCOUNTS.map(acc => {
             const a   = (item.accounts || {})[acc] || { applied: false, broker: '', qty: 0, refunded: false, registered: false };
             const reg = a.registered;
+            // 배정 수량이 있을 때만 등록 버튼 표시 (0이면 '-' 표시)
             const regBtn = a.qty > 0
                 ? `<button class="btn-reg ${reg ? 'done' : ''}" onclick="goRegister('${cnQ}','${acc}')">
                        ${reg ? '✓등록됨' : '📝등록'}
@@ -286,20 +372,26 @@
                 : `<span style="color:#dee2e6;font-size:11px">-</span>`;
 
             return `<tr>
+                <!-- 계좌명: 미신청이면 회색으로 표시 -->
                 <td class="acc-name-cell ${!a.applied ? 'inactive' : ''}">${acc}</td>
+                <!-- 신청 체크박스: 변경 시 updateField() 호출 -->
                 <td><div class="chk-wrap">
                     <input type="checkbox" ${a.applied ? 'checked' : ''}
                         onchange="updateField('${cnQ}','${acc}','applied',this.checked)">
                 </div></td>
+                <!-- 증권사 선택: 미신청이면 비활성화 -->
                 <td>${brokerSelect(cnQ, acc, a.broker || '', !a.applied)}</td>
+                <!-- 배정 수량 입력: 미신청이면 비활성화 -->
                 <td><input class="qty-input" type="number" min="0" value="${a.qty || 0}"
                     onchange="updateField('${cnQ}','${acc}','qty',parseInt(this.value)||0)"
                     ${!a.applied ? 'disabled' : ''}></td>
+                <!-- 환불 체크박스: 미신청이면 비활성화 -->
                 <td><div class="chk-wrap">
                     <input type="checkbox" ${a.refunded ? 'checked' : ''}
                         onchange="updateField('${cnQ}','${acc}','refunded',this.checked)"
                         ${!a.applied ? 'disabled' : ''}>
                 </div></td>
+                <!-- 청약내역 등록 버튼: 배정 수량이 있을 때만 활성화 -->
                 <td>${regBtn}</td>
             </tr>`;
         }).join('');
@@ -326,35 +418,57 @@
     }
 
     // ── 상태 업데이트 ────────────────────────────────────────
-    /** 특정 계좌의 특정 필드를 변경하고 DB에 자동저장합니다. */
+    /**
+     * 특정 종목의 특정 계좌에서 특정 필드를 변경하고 DB에 자동저장합니다.
+     * - applied(신청) 해제 시: broker, qty, refunded 동시 초기화
+     * - 저장 후 해당 카드만 재렌더링 (전체 목록 갱신 없이 성능 최적화)
+     * - applied 또는 qty 변경 시 알림 재스케줄
+     * @param {string} corpName - 종목명
+     * @param {string} acc - 계좌명
+     * @param {string} field - 변경할 필드명 ('applied' | 'broker' | 'qty' | 'refunded')
+     * @param {*} value - 새 값
+     */
     async function updateField(corpName, acc, field, value) {
         const item = _items.find(i => i.corpName === corpName);
         if (!item) return;
         if (!item.accounts[acc]) item.accounts[acc] = { applied: false, qty: 0, refunded: false, registered: false };
         item.accounts[acc][field] = value;
 
-        // 신청 해제 시 증권사/배정수량/환불도 초기화
+        // 신청 해제 시 증권사/배정수량/환불도 초기화 (연관 필드 클리어)
         if (field === 'applied' && !value) {
             item.accounts[acc].broker   = '';
             item.accounts[acc].qty      = 0;
             item.accounts[acc].refunded = false;
         }
 
+        // DB에 저장 (saveChecklist는 db.js에서 제공)
         await saveChecklist(item);
         _dbMap[corpName] = item;
 
-        // 해당 카드만 다시 렌더
+        // 해당 카드만 다시 렌더 (DOM 최소 조작으로 성능 최적화)
         const cardEl = document.getElementById('card-' + CSS.escape(corpName));
         if (cardEl) cardEl.outerHTML = buildCard(item);
 
-        // 알림 재스케줄 (applied/qty 변경 시)
+        // 알림 재스케줄 (applied/qty 변경 시: 알림 대상 종목 변경)
         if (field === 'applied' || field === 'qty') {
             scheduleIpoNotifications().catch(() => {});
         }
     }
 
     // ── 청약내역 등록 ─────────────────────────────────────────
-    /** 배정된 계좌의 정보를 sessionStorage에 저장 후 ipo.html로 이동합니다. */
+    /**
+     * 배정된 계좌의 정보를 sessionStorage에 저장 후 ipo.html로 이동합니다.
+     * ipo.html의 checkCalendarPrefill()이 이 데이터를 읽어 폼에 자동으로 채웁니다.
+     * prefill 데이터:
+     * - stockName, subscriptionStartDate, subscriptionEndDate, listingDate
+     * - offeringPrice: DB에 저장된 값 또는 kokstock 상세 조회
+     * - kokIdx: 공모가 자동조회에 사용
+     * - accounts: 선택된 계좌명 (단일)
+     * - broker: 선택된 증권사명
+     * - soldQty: 배정 수량
+     * @param {string} corpName - 종목명
+     * @param {string} acc - 계좌명
+     */
     function goRegister(corpName, acc) {
         const item = _items.find(i => i.corpName === corpName);
         if (!item) return;
@@ -372,18 +486,23 @@
             soldQty:               a.qty || 0
         };
 
+        // sessionStorage를 통해 ipo.html로 데이터 전달
         sessionStorage.setItem('calendarPrefill', JSON.stringify(prefill));
         location.href = 'ipo.html';
     }
 
     // ── 동기화 ──────────────────────────────────────────────
-    /** kokstock 캐시를 초기화하고 최신 데이터를 다시 불러옵니다. */
+    /**
+     * kokstock 캐시를 초기화하고 최신 공모주 일정 데이터를 다시 불러옵니다.
+     * - 동기화 중: 버튼 비활성화 + '동기화중...' 텍스트
+     * - 완료/실패 시 텍스트 변경 후 2초 뒤 원래 상태로 복원
+     */
     async function doSync() {
         const btn = document.getElementById('syncBtn');
         btn.disabled = true;
         btn.textContent = '⏳ 동기화중...';
         try {
-            await refreshKokstockCache();
+            await refreshKokstockCache(); // kokstock.js: 캐시 삭제 후 API 재호출
             await loadData();
             btn.textContent = '✅ 완료';
         } catch (e) {
@@ -393,12 +512,13 @@
     }
 
     // ── 초기 로드 ────────────────────────────────────────────
+    // 데이터 로드 실패 시 오류 메시지 표시
     loadData().catch(e => {
         document.getElementById('cardSection').innerHTML =
             `<div class="loading" style="color:#dc3545">로드 실패: ${e.message}</div>`;
     });
-    initTabSwipe();
-    initPullRefresh();
+    initTabSwipe();    // 탭 간 스와이프 제스처 초기화 (swipe.js)
+    initPullRefresh(); // 당겨서 새로고침 초기화 (swipe.js)
 </script>
 </body>
 </html>

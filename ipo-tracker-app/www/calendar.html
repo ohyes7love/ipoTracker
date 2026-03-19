@@ -8,6 +8,7 @@
         * { box-sizing: border-box; }
         body { background: #f5f6fa; padding-bottom: 70px; font-size: 14px; margin: 0; font-family: -apple-system, sans-serif; }
 
+        /* ── 하단 네비게이션 바 ── */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
             background: #0d6efd; display: flex; border-top: 1px solid #0b5ed7;
@@ -19,12 +20,14 @@
         .bottom-nav a.active { color: #fff; font-weight: 700; }
         .bottom-nav a span { display: block; font-size: 18px; }
 
+        /* ── 상단 고정 타이틀 바 ── */
         .top-bar {
             background: #0d6efd; color: #fff; padding: 12px 16px;
             position: sticky; top: 0; z-index: 100;
         }
         .top-bar h1 { font-size: 16px; margin: 0; font-weight: 700; }
 
+        /* ── 월 이동 헤더 (이전/다음 화살표) ── */
         .cal-header {
             display: flex; align-items: center; justify-content: space-between;
             padding: 10px 16px; background: #fff; border-bottom: 1px solid #e0e0e0;
@@ -35,28 +38,33 @@
             color: #0d6efd; padding: 2px 12px; cursor: pointer; line-height: 1;
         }
 
+        /* ── 달력 그리드 (월~금 5열) ── */
         .cal-grid {
             display: grid; grid-template-columns: repeat(5, 1fr);
             background: #e8e8e8; gap: 1px;
         }
+        /* 요일 헤더 셀 */
         .cal-weekday {
             text-align: center; padding: 7px 0; font-size: 11px; font-weight: 700;
             color: #6c757d; background: #fff;
         }
+        /* 날짜 셀 */
         .cal-day {
             min-height: 70px; padding: 3px 2px;
             background: #fff; overflow: hidden;     /* 셀 넘침 방지 */
         }
         .cal-day.other-month { background: #fafafa; }
+        /* 오늘 날짜: 날짜 숫자에 파란 원형 배경 */
         .cal-day.today .day-num { background: #0d6efd; color: #fff !important; }
 
+        /* 날짜 숫자 표시 (원형) */
         .day-num {
             font-size: 12px; font-weight: 600; color: #333;
             width: 22px; height: 22px; display: flex; align-items: center;
             justify-content: center; border-radius: 50%; margin: 1px auto 2px;
         }
 
-        /* 이벤트 뱃지 - 텍스트 잘림 처리 */
+        /* ── 이벤트 뱃지 - 텍스트 잘림 처리 ── */
         .event {
             font-size: 10px; font-weight: 600; border-radius: 3px;
             padding: 1px 3px; margin: 1px 0 0;
@@ -64,17 +72,21 @@
             cursor: pointer; overflow: hidden; width: 100%;
         }
         .event-badge { font-size: 9px; font-weight: 800; flex-shrink: 0; }
+        /* 종목명은 넘칠 경우 말줄임 처리 */
         .event-name  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+        /* 청약 기간 이벤트: 분홍 배경 */
         .event-sub     { background: #ffe0ec; color: #c0004e; }
+        /* 상장일 이벤트: 파랑 배경 */
         .event-listing { background: #d0e8ff; color: #003d80; }
 
-        /* 바텀시트 */
+        /* ── 종목 상세 바텀시트 ── */
         #infoSheet {
             display: none; position: fixed; bottom: 56px; left: 0; right: 0; z-index: 500;
             background: #fff; border-radius: 16px 16px 0 0;
             box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
             max-height: 72vh; overflow-y: auto;
         }
+        /* 바텀시트 헤더 (sticky: 스크롤해도 상단 고정) */
         .sheet-hdr {
             position: sticky; top: 0; background: #fff; z-index: 1;
             padding: 14px 16px 10px; border-bottom: 1px solid #eee;
@@ -82,6 +94,7 @@
         }
         .sheet-hdr-left { display: flex; align-items: center; gap: 8px; }
         .sheet-title { font-size: 16px; font-weight: 700; color: #222; }
+        /* 시장 구분 뱃지 (코스피/코스닥 등) */
         .sheet-market {
             font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
             background: #e8f5e9; color: #2e7d32;
@@ -89,6 +102,7 @@
         .sheet-close { background: none; border: none; font-size: 22px; color: #aaa; cursor: pointer; }
         .sheet-body { padding: 12px 16px 16px; }
 
+        /* ── 종목 상세 정보 그리드 (2열) ── */
         .info-grid {
             display: grid; grid-template-columns: 1fr 1fr;
             border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;
@@ -103,6 +117,7 @@
         .info-cell-val { font-size: 12px; font-weight: 700; color: #222; }
         .info-cell-val.red { color: #c0004e; }
 
+        /* ── 증권사 배정 정보 테이블 ── */
         .broker-tit { font-size: 12px; font-weight: 700; color: #444; margin-bottom: 6px; }
         .broker-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
         .broker-tbl th { background: #f5f6fa; padding: 6px 8px; text-align: left; border-bottom: 1px solid #e0e0e0; color: #666; font-weight: 600; }
@@ -111,7 +126,7 @@
         .broker-tbl td:not(:first-child) { text-align: right; }
         .sheet-loading { text-align: center; padding: 24px; color: #aaa; font-size: 13px; }
 
-        /* 오버레이 */
+        /* ── 바텀시트 배경 오버레이 ── */
         #sheetOverlay {
             display: none; position: fixed; inset: 0; z-index: 499;
             background: rgba(0,0,0,0.3);
@@ -120,27 +135,46 @@
 </head>
 <body>
 
+<!-- ════════════════════════════════════════════
+     상단 타이틀 바
+     - 동기화 버튼: kokstock 캐시 강제 갱신
+     ════════════════════════════════════════════ -->
 <div class="top-bar" style="display:flex;align-items:center;justify-content:space-between;">
     <h1>공모주 캘린더</h1>
     <button id="refreshBtn" onclick="doRefresh()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:5px 12px;font-size:13px;cursor:pointer;">🔄 동기화</button>
 </div>
 
+<!-- ════════════════════════════════════════════
+     월 이동 헤더
+     - ‹ / › 버튼으로 이전/다음 달 이동
+     - calTitle에 현재 표시 중인 연월 표시
+     ════════════════════════════════════════════ -->
 <div class="cal-header">
     <button class="cal-nav" onclick="moveMonth(-1)">‹</button>
     <span class="cal-title" id="calTitle"></span>
     <button class="cal-nav" onclick="moveMonth(1)">›</button>
 </div>
 
+<!-- 달력 그리드 컨테이너 (renderCalendar()에 의해 동적 렌더링) -->
 <div id="calWrapper"></div>
 
-<!-- 바텀시트 오버레이 -->
+<!-- ════════════════════════════════════════════
+     바텀시트 배경 오버레이
+     - 클릭 시 바텀시트 닫힘
+     ════════════════════════════════════════════ -->
 <div id="sheetOverlay" onclick="closeInfo()"></div>
 
-<!-- 종목 상세 바텀시트 -->
+<!-- ════════════════════════════════════════════
+     종목 상세 바텀시트
+     - 달력 이벤트 클릭 시 표시
+     - kokstock API에서 상세 정보 로드
+     - 청약내역 등록 버튼으로 ipo.html 이동
+     ════════════════════════════════════════════ -->
 <div id="infoSheet">
     <div class="sheet-hdr">
         <div class="sheet-hdr-left">
             <span id="infoName" class="sheet-title"></span>
+            <!-- 시장 구분 뱃지 (코스피/코스닥): 데이터 있을 때만 표시 -->
             <span id="infoMarket" class="sheet-market" style="display:none"></span>
         </div>
         <button class="sheet-close" onclick="closeInfo()">✕</button>
@@ -148,6 +182,7 @@
     <div class="sheet-body" id="infoBody">
         <div class="sheet-loading">로딩 중...</div>
     </div>
+    <!-- 청약내역 등록 버튼: goToRegister()로 ipo.html에 prefill 데이터 전달 -->
     <div style="padding:10px 16px 12px">
         <button id="btnRegister" onclick="goToRegister()"
             style="width:100%;background:#0d6efd;color:#fff;border:none;border-radius:10px;
@@ -157,6 +192,9 @@
     </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     하단 탭 네비게이션
+     ════════════════════════════════════════════ -->
 <nav class="bottom-nav">
     <a href="index.html"><span>📊</span>대시보드</a>
     <a href="ipo.html"><span>📋</span>청약내역</a>
@@ -169,15 +207,29 @@
 <script src="js/kokstock.js"></script>
 <script src="js/db.js"></script>
 <script>
+    // 오늘 날짜 객체 (today 셀 강조에 사용)
     const todayDate = new Date();
+    // 현재 표시 중인 연/월
     let curYear  = todayDate.getFullYear();
     let curMonth = todayDate.getMonth() + 1;
+    // 종목명 → 일정 객체 맵 (바텀시트 표시에 사용)
     let scheduleMap = {};   // corpName → schedule
 
+    /**
+     * Date 객체를 'YYYY-MM-DD' 로컬 날짜 문자열로 변환합니다.
+     * toISOString()은 UTC 기준이므로 로컬 시간 오차를 방지하기 위해 직접 조합합니다.
+     * @param {Date} d - 변환할 Date 객체
+     * @returns {string} YYYY-MM-DD 형식 문자열
+     */
     function localDateStr(d) {
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
 
+    /**
+     * 현재 표시 월을 delta만큼 이동합니다.
+     * 12월에서 +1이면 다음 해 1월로, 1월에서 -1이면 이전 해 12월로 처리합니다.
+     * @param {number} delta - 이동할 월 수 (+1 또는 -1)
+     */
     function moveMonth(delta) {
         curMonth += delta;
         if (curMonth > 12) { curMonth = 1; curYear++; }
@@ -185,16 +237,29 @@
         renderCalendar();
     }
 
+    // 달력에 표시할 요일 (주말 제외, 월~금)
     const WEEKDAYS = ['월', '화', '수', '목', '금'];
 
+    /**
+     * 수동 입력 IPO 항목과 kokstock 일정을 병합하여 날짜별 이벤트 맵을 구성합니다.
+     * - 청약 기간(subscriptionStartDate ~ subscriptionEndDate): 'sub' 타입
+     * - 상장일(listingDate): 'listing' 타입
+     * - scheduleMap 업데이트: 종목명 → 일정 객체 (바텀시트 데이터 소스)
+     * @param {Array} manualItems - 사용자가 직접 입력한 IPO 배열
+     * @param {Array} kokSchedules - kokstock API에서 받은 일정 배열
+     * @param {string} monthStr - 'YYYY-MM' 형식의 현재 월 문자열
+     * @returns {Object} { dateStr: [{ name, type }] } 형태의 이벤트 맵
+     */
     function buildEventMap(manualItems, kokSchedules, monthStr) {
         scheduleMap = {};
         const eventMap = {};
+        // 중복 방지를 위한 addEvent 헬퍼 (같은 날짜+종목+타입 중복 제거)
         const addEvent = (dateStr, name, type) => {
             if (!eventMap[dateStr]) eventMap[dateStr] = [];
             if (!eventMap[dateStr].find(e => e.name === name && e.type === type))
                 eventMap[dateStr].push({ name, type });
         };
+        // 수동 항목을 kokstock 형식으로 변환하여 통합
         const items = [
             ...manualItems.map(i => ({ corpName: i.stockName, subscriptionStartDate: i.subscriptionStartDate, subscriptionEndDate: i.subscriptionEndDate, listingDate: i.listingDate })),
             ...kokSchedules
@@ -202,45 +267,67 @@
         items.forEach(item => {
             const name = item.corpName || '';
             if (name) scheduleMap[name] = item;
+            // 청약 기간: 시작일부터 종료일까지 매일 이벤트 추가
             if (item.subscriptionStartDate) {
                 let d = new Date(item.subscriptionStartDate + 'T00:00:00');
                 const endD = new Date((item.subscriptionEndDate || item.subscriptionStartDate) + 'T00:00:00');
                 while (d <= endD) {
                     const ds = localDateStr(d);
+                    // 현재 표시 월에 해당하는 날짜만 추가
                     if (ds.startsWith(monthStr)) addEvent(ds, name, 'sub');
                     d.setDate(d.getDate() + 1);
                 }
             }
+            // 상장일 이벤트
             if (item.listingDate && item.listingDate.startsWith(monthStr))
                 addEvent(item.listingDate, name, 'listing');
         });
         return eventMap;
     }
 
+    /**
+     * 종목명을 HTML 속성에 안전하게 삽입하기 위한 이스케이프 함수.
+     * onclick 속성에 사용되는 문자열의 특수문자를 변환합니다.
+     * @param {string} s - 이스케이프할 문자열
+     * @returns {string} 이스케이프된 문자열
+     */
     function esc(s) { return s.replace(/'/g, "\\'").replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+    /**
+     * 달력 그리드 HTML을 생성하여 calWrapper에 삽입합니다.
+     * - 월~금(5열)만 표시하며 주말은 건너뜁니다.
+     * - 오늘 날짜 셀에 'today' 클래스 추가
+     * - 각 날짜 셀에 최대 3개의 이벤트 뱃지 표시
+     * @param {Object} eventMap - buildEventMap()이 반환한 날짜별 이벤트 맵
+     */
     function buildGrid(eventMap) {
+        // 해당 월 1일의 요일 계산 (0=일 기준을 월 기준으로 변환: +6 % 7)
         const firstDow = (new Date(curYear, curMonth - 1, 1).getDay() + 6) % 7;
+        // 1일이 주말이면 오프셋 0 (첫 주 월요일부터 시작), 아니면 해당 요일까지 빈 셀
         const startOff = firstDow < 5 ? firstDow : 0;
         const lastDate = new Date(curYear, curMonth, 0).getDate();
         const todayStr = localDateStr(todayDate);
 
         let html = '<div class="cal-grid">';
+        // 요일 헤더 (월~금)
         WEEKDAYS.forEach(w => { html += `<div class="cal-weekday">${w}</div>`; });
+        // 1일 전 빈 셀 (이전 달 날짜 영역)
         for (let i = 0; i < startOff; i++) html += '<div class="cal-day other-month"></div>';
 
         for (let d = 1; d <= lastDate; d++) {
             const date = new Date(curYear, curMonth - 1, d);
-            const dow  = (date.getDay() + 6) % 7;
-            if (dow >= 5) continue;
+            const dow  = (date.getDay() + 6) % 7; // 월=0, 금=4, 토=5, 일=6
+            if (dow >= 5) continue; // 주말 제외
 
             const ds  = localDateStr(date);
             let cls   = 'cal-day' + (ds === todayStr ? ' today' : '');
 
-            const evs = (eventMap[ds] || []).slice(0, 3); // 최대 3개
+            // 해당 날짜의 이벤트 최대 3개 표시
+            const evs = (eventMap[ds] || []).slice(0, 3);
             const evHtml = evs.map(e => {
                 const badge = e.type === 'sub' ? '청' : '상';
                 const ecls  = e.type === 'sub' ? 'event-sub' : 'event-listing';
+                // 클릭 시 showInfo() 호출로 바텀시트 표시
                 return `<div class="event ${ecls}" onclick="showInfo('${esc(e.name)}')"><span class="event-badge">${badge}</span><span class="event-name">${e.name}</span></div>`;
             }).join('');
             html += `<div class="${cls}"><div class="day-num">${d}</div>${evHtml}</div>`;
@@ -249,14 +336,21 @@
         document.getElementById('calWrapper').innerHTML = html;
     }
 
+    /**
+     * 현재 연/월(curYear, curMonth)의 달력을 렌더링합니다.
+     * 1. 로컬 DB에서 수동 입력 IPO를 먼저 로드하여 빠르게 표시
+     * 2. kokstock API에서 공모 일정을 비동기로 받아 추가 렌더링
+     */
     async function renderCalendar() {
         document.getElementById('calTitle').textContent =
             curYear + '.' + String(curMonth).padStart(2,'0');
         const monthStr = curYear + '-' + String(curMonth).padStart(2,'0');
 
+        // 1단계: 로컬 DB 데이터로 즉시 렌더링
         const manualItems = await getAllIpos();
         buildGrid(buildEventMap(manualItems, [], monthStr));
 
+        // 2단계: kokstock API 데이터를 받아 달력 갱신 (비동기)
         getKokstockSchedulesByMonth(curYear, curMonth)
             .then(sched => { buildGrid(buildEventMap(manualItems, sched, monthStr)); })
             .catch(e => console.warn('kokstock error', e));
@@ -265,9 +359,15 @@
     // ── 상세 바텀시트 ──────────────────────────────────────
 
     // 현재 바텀시트에 열린 종목 데이터 (등록 버튼에서 사용)
-    let _currentSchedule = null;
-    let _currentDetail   = null;
+    let _currentSchedule = null; // kokstock 일정 객체
+    let _currentDetail   = null; // kokstock 상세 정보 객체
 
+    /**
+     * 종목 상세 바텀시트를 표시합니다.
+     * - scheduleMap에서 기본 일정 정보 로드
+     * - kokstock API에서 상세 정보(공모가, 경쟁률, 증권사 등) 비동기 로드
+     * @param {string} name - 표시할 종목명 (corpName)
+     */
     function showInfo(name) {
         const s = scheduleMap[name] || {};
         _currentSchedule = s;
@@ -280,12 +380,14 @@
         document.getElementById('infoSheet').style.display = 'block';
         document.getElementById('sheetOverlay').style.display = 'block';
 
+        // kokstock idx가 있으면 상세 API 호출, 없으면 기본 정보만 표시
         if (s.idx) {
             getKokstockDetail(s.idx).then(d => {
                 _currentDetail = d;
                 if (d.market) { mEl.textContent = d.market; mEl.style.display = 'inline'; }
                 document.getElementById('infoBody').innerHTML = renderDetailHtml(d);
             }).catch(() => {
+                // 상세 조회 실패 시 기본 정보 표시
                 document.getElementById('infoBody').innerHTML = renderBasicHtml(s);
             });
         } else {
@@ -293,6 +395,12 @@
         }
     }
 
+    /**
+     * 바텀시트의 '청약내역 등록' 버튼 핸들러.
+     * 현재 바텀시트에 열린 종목 정보를 sessionStorage에 저장하고 ipo.html로 이동합니다.
+     * - 확정공모가: "12,000" 형식 → 12000 숫자로 변환
+     * - ipo.html에서 checkCalendarPrefill()이 이 데이터를 읽어 폼에 자동 채움
+     */
     function goToRegister() {
         const s = _currentSchedule || {};
         const d = _currentDetail;
@@ -310,19 +418,36 @@
             offeringPrice:         offeringPrice
         };
 
+        // ipo.html에 데이터 전달 (sessionStorage 사용)
         sessionStorage.setItem('calendarPrefill', JSON.stringify(prefill));
         location.href = 'ipo.html';
     }
 
+    /**
+     * 바텀시트와 오버레이를 닫습니다.
+     */
     function closeInfo() {
         document.getElementById('infoSheet').style.display = 'none';
         document.getElementById('sheetOverlay').style.display = 'none';
     }
 
+    /**
+     * 정보 셀 HTML을 생성합니다.
+     * @param {string} key - 레이블 텍스트
+     * @param {string} val - 값 텍스트 (없으면 '-' 표시)
+     * @param {boolean} red - true이면 빨간색 강조 (확정공모가, 경쟁률 등)
+     * @returns {string} HTML 문자열
+     */
     function infoCell(key, val, red) {
         return `<div class="info-cell"><div class="info-cell-key">${key}</div><div class="info-cell-val${red?' red':''}">${val || '-'}</div></div>`;
     }
 
+    /**
+     * 기본 일정 정보만으로 바텀시트 본문 HTML을 생성합니다.
+     * kokstock 상세 API 없이도 청약 기간과 상장일을 표시합니다.
+     * @param {Object} s - 일정 객체 (subscriptionStartDate, subscriptionEndDate, listingDate)
+     * @returns {string} HTML 문자열
+     */
     function renderBasicHtml(s) {
         const sub = s.subscriptionStartDate
             ? s.subscriptionStartDate.slice(5) + (s.subscriptionEndDate && s.subscriptionEndDate !== s.subscriptionStartDate ? ' ~ ' + s.subscriptionEndDate.slice(5) : '')
@@ -330,8 +455,17 @@
         return `<div class="info-grid">${infoCell('청약기간', sub)}${infoCell('상장일', s.listingDate ? s.listingDate.slice(5) : '-')}</div>`;
     }
 
+    /**
+     * kokstock 상세 정보를 바텀시트 본문 HTML로 렌더링합니다.
+     * - 10개 핵심 필드를 2열 그리드로 표시
+     * - 증권사별 배정 물량과 청약 한도 테이블 표시
+     * - 비고(memo) 섹션 표시
+     * @param {Object} d - kokstock 상세 API 응답 객체 { info, brokers, memo, market }
+     * @returns {string} HTML 문자열
+     */
     function renderDetailHtml(d) {
         const info = d.info || {};
+        // 표시할 필드 목록 (필드명, 빨간색 강조 여부)
         const fields = [
             ['청약일정', false], ['환불일', false],
             ['희망공모가', false], ['확정공모가', true],
@@ -341,6 +475,7 @@
         ];
         const cells = fields.map(([k, red]) => infoCell(k, info[k], red)).join('');
 
+        // 증권사별 배정 물량 테이블
         let brokersHtml = '';
         if (d.brokers && d.brokers.length > 0) {
             const rows = d.brokers.map(b =>
@@ -353,6 +488,7 @@
                     ${rows}
                 </table>`;
         }
+        // 비고 섹션 (있는 경우만 표시)
         let memoHtml = '';
         if (d.memo) {
             memoHtml = `<div class="broker-tit" style="margin-top:12px">비고</div>
@@ -361,6 +497,12 @@
         return `<div class="info-grid">${cells}</div>${brokersHtml}${memoHtml}`;
     }
 
+    /**
+     * kokstock 캐시를 강제 갱신하고 달력을 다시 렌더링합니다.
+     * 동기화 버튼 클릭 시 실행됩니다.
+     * - 로딩 중/완료/실패 상태를 버튼 텍스트로 표시
+     * - 2초 후 버튼 원래 상태로 복원
+     */
     async function doRefresh() {
         const btn = document.getElementById('refreshBtn');
         btn.textContent = '⏳ 로딩중...';
@@ -375,9 +517,10 @@
         setTimeout(() => { btn.textContent = '🔄 동기화'; btn.disabled = false; }, 2000);
     }
 
-    renderCalendar();
-    initCalendarSwipe('calWrapper');
-    initPullRefresh();
+    // ── 초기화 ──────────────────────────────────────────
+    renderCalendar();                       // 달력 초기 렌더링
+    initCalendarSwipe('calWrapper');        // 좌우 스와이프로 월 이동 (swipe.js)
+    initPullRefresh();                      // 당겨서 새로고침 초기화 (swipe.js)
 </script>
 </body>
 </html>

@@ -9,6 +9,7 @@
     <style>
         body { background: #f5f6fa; padding-bottom: 70px; font-size: 14px; }
 
+        /* ── 하단 네비게이션 바 ── */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
             background: #0d6efd; display: flex; border-top: 1px solid #0b5ed7;
@@ -20,6 +21,7 @@
         .bottom-nav a.active { color: #fff; font-weight: 700; }
         .bottom-nav a span { display: block; font-size: 18px; }
 
+        /* ── 상단 고정 타이틀 바 ── */
         .top-bar {
             background: #0d6efd; color: #fff; padding: 12px 16px;
             display: flex; align-items: center; justify-content: space-between;
@@ -33,6 +35,7 @@
 
         .content { padding: 14px 12px; }
 
+        /* ── 연간 총 수익 카드 ── */
         .profit-card {
             background: #fff; border-radius: 14px; padding: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 14px;
@@ -40,19 +43,23 @@
         }
         .profit-card .label { color: #6c757d; font-size: 13px; margin-bottom: 6px; }
         .profit-card .amount { font-size: 26px; font-weight: 700; }
+        /* 수익 컬러: 양수=빨강, 음수=파랑, 제로=회색 */
         .profit-plus { color: #dc3545; }
         .profit-minus { color: #0d6efd; }
         .profit-zero  { color: #6c757d; }
 
+        /* ── 월별 수익 차트 카드 ── */
         .chart-card {
             background: #fff; border-radius: 14px; padding: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         .chart-card h5 { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 12px; }
 
+        /* ── 연도 선택 바 ── */
         .year-row { padding: 10px 12px; background: #fff; border-bottom: 1px solid #e0e0e0; }
         .year-row select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid #ced4da; }
 
+        /* ── Bootstrap 모달 (바텀시트 스타일) ── */
         .modal-dialog { margin: 0; max-width: 100%; }
         .modal-content { border-radius: 16px 16px 0 0; }
         .modal.fade  .modal-dialog { transition: opacity 0.2s ease; opacity: 0; }
@@ -83,10 +90,12 @@
         .today-row:last-child { border-bottom: none; }
         .today-row .t-corp   { flex: 1; font-weight: 500; }
         .today-row .t-extra  { font-size: 11px; color: #aaa; white-space: nowrap; }
+        /* 상태 뱃지: 청약시작(파랑), 청약중(청록), 청약마감(노랑), 상장(빨강) */
         .bdg-new  { background: #cfe2ff; color: #0a58ca; border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
         .bdg-ing  { background: #d1ecf1; color: #0c5460; border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
         .bdg-end  { background: #fff3cd; color: #856404; border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
         .bdg-list { background: #fde8e8; color: #dc3545; border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        /* 내 보유 종목은 좌측에 노란 보더 + 배경 강조 */
         .today-row.my-stock { background: #fffdf0; border-left: 3px solid #ffc107; padding-left: 11px; }
         .bdg-mine { background: #ffc107; color: #212529; border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 
@@ -104,17 +113,28 @@
 </head>
 <body>
 
+<!-- ════════════════════════════════════════════
+     상단 타이틀 바
+     - 앱 제목 표시
+     - ⚙️ 버튼 클릭 시 설정 모달 오픈
+     ════════════════════════════════════════════ -->
 <div class="top-bar">
     <h1>공모주 수익 관리</h1>
     <button class="btn-settings" onclick="openSettings()">⚙️</button>
 </div>
 
+<!-- ════════════════════════════════════════════
+     연도 선택 드롭다운
+     - 선택한 연도에 맞춰 수익 데이터 및 차트 갱신
+     ════════════════════════════════════════════ -->
 <div class="year-row">
     <select id="yearSelect"></select>
 </div>
 
 <div class="content">
-    <!-- 오늘의 공모주 알림 -->
+    <!-- ── 오늘의 공모주 알림 카드 ──
+         오늘 청약시작/청약중/청약마감/상장인 종목을 표시.
+         데이터가 없으면 style="display:none" 으로 숨김 처리. -->
     <div id="todayAlert" class="today-alert" style="display:none">
         <div class="today-alert-header">
             <span class="ha-title">🔔 오늘의 공모주</span>
@@ -123,7 +143,9 @@
         <div class="today-alert-body" id="todayAlertBody"></div>
     </div>
 
-    <!-- 미출금 대기 요약 -->
+    <!-- ── 미출금 대기 요약 카드 ──
+         출금 처리되지 않은 수익이 있을 때 표시.
+         클릭 시 ipo.html?filter=pending 으로 이동. -->
     <div class="withdraw-card" id="withdrawCard" style="display:none" onclick="location.href='ipo.html?filter=pending'">
         <div class="wc-left">
             <div class="wc-title">💸 미출금 대기</div>
@@ -132,17 +154,23 @@
         <div class="wc-amount" id="withdrawAmount"></div>
     </div>
 
+    <!-- ── 연간 총 수익 카드 ── -->
     <div class="profit-card">
         <div class="label">연간 총 수익</div>
         <div class="amount profit-zero" id="totalProfit">0 원</div>
     </div>
 
+    <!-- ── 월별 수익 막대 차트 (Chart.js) ── -->
     <div class="chart-card">
         <h5>월별 수익 현황</h5>
         <canvas id="monthlyChart"></canvas>
     </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     하단 탭 네비게이션
+     - 대시보드(현재) / 청약내역 / 캘린더 / 체크 / 통계
+     ════════════════════════════════════════════ -->
 <nav class="bottom-nav">
     <a href="index.html" class="active"><span>📊</span>대시보드</a>
     <a href="ipo.html"><span>📋</span>청약내역</a>
@@ -151,7 +179,11 @@
     <a href="stats.html"><span>📈</span>통계</a>
 </nav>
 
-<!-- 설정 모달 -->
+<!-- ════════════════════════════════════════════
+     설정 모달 (바텀시트 방식)
+     - 계좌 이름 관리 (쉼표 구분 입력)
+     - 데이터 내보내기(JSON) / 가져오기(복원)
+     ════════════════════════════════════════════ -->
 <div class="modal fade" id="settingsModal" tabindex="-1">
     <div class="modal-dialog" style="position:fixed;bottom:0;width:100%;margin:0;">
         <div class="modal-content">
@@ -170,7 +202,9 @@
                 <hr style="margin:14px 0 10px;">
                 <label class="form-label fw-bold">데이터 백업 / 복원</label>
                 <div class="d-flex gap-2">
+                    <!-- 내보내기: doExport() 호출 → exportBackup() → JSON 파일 다운로드 -->
                     <button class="btn btn-outline-secondary flex-1" style="flex:1;font-size:13px;" onclick="doExport()">📤 내보내기</button>
+                    <!-- 가져오기: 파일 선택 → doImport() 호출 → importBackup() -->
                     <label class="btn btn-outline-secondary flex-1" style="flex:1;font-size:13px;cursor:pointer;margin:0;">
                         📥 가져오기
                         <input type="file" accept=".json" id="importFileInput" style="display:none" onchange="doImport(this)">
@@ -192,8 +226,14 @@
 <script src="js/kokstock.js"></script>
 <script src="js/notifications.js"></script>
 <script>
+    // 현재 연도 (초기 데이터 로드 기준)
     const currentYear = new Date().getFullYear();
 
+    /**
+     * 연도 선택 드롭다운 초기화 (즉시 실행 함수)
+     * 현재 연도 -2년 ~ +1년 범위를 옵션으로 추가하고
+     * 현재 연도를 기본 선택값으로 설정합니다.
+     */
     (function initYearSelect() {
         const sel = document.getElementById('yearSelect');
         for (let y = currentYear - 2; y <= currentYear + 1; y++) {
@@ -204,12 +244,20 @@
         }
     })();
 
+    // Chart.js 차트 인스턴스 (연도 변경 시 destroy 후 재생성)
     let chart;
 
+    /**
+     * 지정 연도의 월별 수익 데이터를 로드하고 화면에 반영합니다.
+     * - getMonthlySummary(year): DB에서 월별 수익 집계 데이터 조회
+     * - 12개월 배열로 변환하여 수익/손실에 따라 색상 구분 (빨강/파랑)
+     * - Chart.js 막대 차트를 파괴(destroy) 후 재생성
+     * @param {number|string} year - 조회할 연도
+     */
     async function loadData(year) {
         const data = await getMonthlySummary(year);
 
-        // 12개월 배열로 변환
+        // 12개월 배열로 변환 (데이터 없는 월은 0으로 채움)
         const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
         const map = {};
         data.forEach(d => { map[d.month] = d.totalProfit; });
@@ -217,14 +265,18 @@
         const hasData = profits.some(v => v !== 0);
 
         const labels = allMonths.map(m => m + '월');
+        // 연간 총 수익 합산
         const total  = profits.reduce((a, b) => a + b, 0);
 
+        // 연간 총 수익 카드 업데이트 (양수: '+' 접두사, 색상 클래스 적용)
         const totalEl = document.getElementById('totalProfit');
         totalEl.textContent = (total > 0 ? '+' : '') + total.toLocaleString() + ' 원';
         totalEl.className   = 'amount ' + (total > 0 ? 'profit-plus' : total < 0 ? 'profit-minus' : 'profit-zero');
 
+        // 수익/손실에 따라 막대 색상 결정 (양수: 빨강, 음수: 파랑)
         const colors = profits.map(v => v >= 0 ? 'rgba(220,53,69,0.75)' : 'rgba(13,110,253,0.75)');
 
+        // 기존 차트 인스턴스 파괴 후 새로 생성
         if (chart) chart.destroy();
         chart = new Chart(document.getElementById('monthlyChart'), {
             type: 'bar',
@@ -243,6 +295,7 @@
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
+                            // 툴팁에 '+/-' 부호 + 원 단위 표시
                             label: ctx => (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toLocaleString() + ' 원'
                         }
                     }
@@ -255,11 +308,20 @@
         });
     }
 
+    /**
+     * 설정 모달을 엽니다.
+     * 현재 저장된 계좌 이름을 입력창에 미리 채워 표시합니다.
+     */
     function openSettings() {
         document.getElementById('accountNamesInput').value = getAccountNames().join(', ');
         new bootstrap.Modal(document.getElementById('settingsModal')).show();
     }
 
+    /**
+     * 설정 모달의 저장 버튼 핸들러.
+     * 계좌 이름을 쉼표로 파싱하여 localStorage에 저장합니다.
+     * 빈 문자열은 필터링 처리합니다.
+     */
     function saveSettings() {
         const namesRaw = document.getElementById('accountNamesInput').value;
         const names = namesRaw.split(',').map(s => s.trim()).filter(Boolean);
@@ -269,6 +331,10 @@
         alert('저장되었습니다. 변경된 계좌 이름은 각 화면 재방문 시 반영됩니다.');
     }
 
+    /**
+     * 데이터 내보내기 (JSON 백업 파일 다운로드).
+     * db.js의 exportBackup() 함수를 호출합니다.
+     */
     async function doExport() {
         try {
             await exportBackup();
@@ -277,6 +343,12 @@
         }
     }
 
+    /**
+     * 데이터 가져오기 (JSON 백업 파일 복원).
+     * 파일 선택 후 확인 다이얼로그를 거쳐 importBackup()을 호출합니다.
+     * 복원 완료 후 오늘의 공모주 알림도 갱신합니다.
+     * @param {HTMLInputElement} input - 파일 input 엘리먼트
+     */
     async function doImport(input) {
         const file = input.files[0];
         if (!file) return;
@@ -295,15 +367,19 @@
         }
     }
 
+    // 연도 선택 변경 이벤트: 선택된 연도로 데이터 재로드
     document.getElementById('yearSelect').addEventListener('change', function () {
         loadData(this.value);
     });
 
+    // 페이지 진입 시 현재 연도 데이터 로드
     loadData(currentYear);
 
     /**
      * 오늘의 공모주 알림 로드
      * kokstock 일정에서 오늘 청약시작/청약중/청약마감/상장인 종목을 조회합니다.
+     * - 내가 보유한 종목(IPO 내역 + 체크리스트)은 '내종목' 뱃지와 함께 강조 표시
+     * - 표시 순서: 상장 > 청약마감 > 청약시작 > 청약중
      */
     async function loadTodayAlert() {
         const today    = new Date();
@@ -313,17 +389,19 @@
         const year  = today.getFullYear();
         const month = today.getMonth() + 1;
 
+        // 헤더에 오늘 날짜 표시 (M/D 형식)
         document.getElementById('todayDateLabel').textContent =
             (today.getMonth() + 1) + '/' + today.getDate();
 
         try {
+            // 세 가지 데이터를 병렬로 조회: kokstock 일정, 내 IPO 내역, 체크리스트
             const [schedules, ipos, checklists] = await Promise.all([
                 getKokstockSchedulesByMonth(year, month),
                 getAllIpos().catch(() => []),
                 getAllChecklists().catch(() => [])
             ]);
 
-            // 내가 배정받은 종목명 Set
+            // 내가 배정받은 종목명 Set (IPO 내역 + 체크리스트 배정 수량 > 0)
             const myStocks = new Set();
             ipos.forEach(s => { if (s.stockName) myStocks.add(s.stockName); });
             checklists.forEach(c => {
@@ -337,6 +415,7 @@
 
             const rows = [];
 
+            // 오늘 날짜와 각 종목의 청약/상장 날짜를 비교하여 타입 분류
             for (const s of schedules) {
                 const start = s.subscriptionStartDate || '';
                 const end   = s.subscriptionEndDate   || '';
@@ -358,12 +437,14 @@
             const alertDiv = document.getElementById('todayAlert');
             const bodyDiv  = document.getElementById('todayAlertBody');
 
+            // 오늘 관련 종목이 없으면 카드 숨김
             if (!rows.length) { alertDiv.style.display = 'none'; return; }
 
             // 표시 순서: 상장 → 청약마감 → 청약시작 → 청약중
             const order = { list: 0, end: 1, new: 2, ing: 3 };
             rows.sort((a, b) => order[a.type] - order[b.type]);
 
+            // 각 타입별 CSS 클래스 및 레이블 매핑
             const meta = {
                 list: { cls: 'bdg-list', lbl: '🎉 상장'    },
                 new:  { cls: 'bdg-new',  lbl: '🆕 청약시작' },
@@ -371,9 +452,12 @@
                 ing:  { cls: 'bdg-ing',  lbl: '📋 청약중'   }
             };
 
+            // 각 행 HTML 생성 (내 종목 강조, 청약중이면 마감일 표시)
             bodyDiv.innerHTML = rows.map(({ type, s }) => {
                 const { cls, lbl } = meta[type];
+                // 상장일인 경우에만 '내종목' 뱃지 표시
                 const isMine = type === 'list' && myStocks.has(s.corpName);
+                // 청약중인 경우 청약 마감일 표시
                 const extra = type === 'ing'
                     ? `<span class="t-extra">~${(s.subscriptionEndDate || '').slice(5).replace('-', '/')}</span>`
                     : '';
@@ -390,10 +474,16 @@
         }
     }
 
-    // ── 미출금 요약 ──────────────────────────────────────
+    /**
+     * 미출금 요약 카드 로드
+     * 출금 처리되지 않은(withdrawn=false) IPO 내역을 집계하여
+     * 건수와 합계 금액을 미출금 카드에 표시합니다.
+     * 미출금 항목이 없으면 카드를 숨깁니다.
+     */
     async function loadWithdrawSummary() {
         try {
             const ipos    = await getAllIpos();
+            // withdrawn이 false이고 수익이 확정된 항목만 필터링
             const pending = ipos.filter(d => !d.withdrawn && d.profit != null);
             const card    = document.getElementById('withdrawCard');
             if (!pending.length) { card.style.display = 'none'; return; }
@@ -405,11 +495,12 @@
         } catch (e) { /* silent */ }
     }
 
-    loadTodayAlert();
-    loadWithdrawSummary();
+    // ── 페이지 초기화 ──────────────────────────────────────
+    loadTodayAlert();          // 오늘의 공모주 알림 로드
+    loadWithdrawSummary();     // 미출금 요약 카드 로드
     scheduleIpoNotifications().catch(() => {}); // 앱 시작 시 알림 갱신
-    initTabSwipe();
-    initPullRefresh();
+    initTabSwipe();            // 탭 간 스와이프 제스처 초기화 (swipe.js)
+    initPullRefresh();         // 당겨서 새로고침 초기화 (swipe.js)
 </script>
 </body>
 </html>

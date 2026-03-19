@@ -8,6 +8,7 @@
     <style>
         body { background: #f5f6fa; padding-bottom: 80px; font-size: 14px; }
 
+        /* ── 하단 네비게이션 바 ── */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
             background: #0d6efd; display: flex; border-top: 1px solid #0b5ed7;
@@ -19,6 +20,7 @@
         .bottom-nav a.active { color: #fff; font-weight: 700; }
         .bottom-nav a span { display: block; font-size: 18px; }
 
+        /* ── 상단 고정 타이틀 바 ── */
         .top-bar {
             background: #0d6efd; color: #fff; padding: 12px 16px;
             display: flex; align-items: center; justify-content: space-between;
@@ -26,6 +28,7 @@
         }
         .top-bar h1 { font-size: 16px; margin: 0; font-weight: 700; }
 
+        /* ── 연도 필터 바 ── */
         .filter-bar {
             padding: 10px 12px; background: #fff;
             border-bottom: 1px solid #e0e0e0;
@@ -34,14 +37,16 @@
         .filter-bar select { font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid #ced4da; }
         .filter-bar label { font-size: 13px; color: #495057; margin: 0; }
 
+        /* ── 섹션 컨테이너 ── */
         .section { padding: 12px; }
+        /* 섹션 제목 (파란 밑줄 강조) */
         .section-title {
             font-size: 13px; font-weight: 700; color: #0d6efd;
             margin-bottom: 10px; padding-bottom: 6px;
             border-bottom: 2px solid #e7f1ff;
         }
 
-        /* 피벗 테이블 */
+        /* ── 증권사 × 월 피벗 테이블 ── */
         .tbl-wrap {
             overflow-x: auto; -webkit-overflow-scrolling: touch;
             border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
@@ -54,26 +59,33 @@
             border: 1px solid #e9ecef;
             padding: 7px 8px; text-align: center; white-space: nowrap;
         }
+        /* 헤더: 파란 배경 + 흰 텍스트 */
         table.pivot thead th {
             background: #0d6efd; color: #fff; font-weight: 600; font-size: 11px;
         }
+        /* 첫 번째 헤더(증권사): 더 진한 파랑 */
         table.pivot thead th:first-child {
             background: #084fc7; min-width: 70px; text-align: left;
         }
         table.pivot tbody tr:nth-child(even) { background: #f8f9fa; }
+        /* 증권사명 열: 좌측 정렬 + 회색 배경 */
         table.pivot tbody td:first-child {
             font-weight: 600; color: #333; text-align: left; background: #f1f3f5;
         }
+        /* 합계 행(tfoot): 파란 강조 */
         table.pivot tfoot td {
             background: #e7f1ff; font-weight: 700; color: #0d6efd;
         }
         table.pivot tfoot td:first-child { text-align: left; }
+        /* 셀 내 건수 표시 */
         .cell-cnt { font-size: 13px; font-weight: 700; color: #212529; }
+        /* 데이터 없는 셀 */
         .cell-zero { color: #ced4da; }
+        /* 수익/손실 서브 텍스트 */
         .cell-profit { font-size: 10px; color: #198754; margin-top: 1px; }
         .cell-loss   { font-size: 10px; color: #dc3545; margin-top: 1px; }
 
-        /* 계좌별 섹션 */
+        /* ── 계좌별 수익 카드 그리드 (2열) ── */
         .acc-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;
         }
@@ -84,10 +96,11 @@
         .acc-name { font-size: 13px; font-weight: 700; color: #0d6efd; margin-bottom: 8px; }
         .acc-stat { font-size: 12px; color: #555; line-height: 1.8; }
         .acc-stat strong { color: #212529; }
+        /* 수익 컬러: 양수=빨강, 음수=파랑 */
         .profit-plus { color: #dc3545; font-weight: 700; }
         .profit-minus { color: #0d6efd; font-weight: 700; }
 
-        /* 요약 카드 */
+        /* ── 연간 요약 카드 (3열 그리드) ── */
         .summary-grid {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px;
         }
@@ -100,16 +113,20 @@
         .sum-value.plus  { color: #dc3545; }
         .sum-value.minus { color: #0d6efd; }
 
-        /* 월별 수익 차트 */
+        /* ── 월별 수익 막대 차트 (CSS 기반, Chart.js 미사용) ── */
         .chart-wrap { background: #fff; border-radius: 12px; padding: 14px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        /* 막대 컨테이너: flexbox로 균등 분할, 높이 100px 고정 */
         .chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 100px; padding-bottom: 4px; }
         .chart-col  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        /* 양수: 빨간 막대 (위쪽 둥근 모서리) */
         .bar-pos    { background: #dc3545; border-radius: 3px 3px 0 0; min-height: 2px; width: 100%; }
+        /* 음수: 파란 막대 (아래쪽 둥근 모서리) */
         .bar-neg    { background: #0d6efd; border-radius: 0 0 3px 3px; min-height: 2px; width: 100%; }
+        /* 제로: 회색 얇은 막대 */
         .bar-zero   { background: #e9ecef; border-radius: 3px; height: 4px; width: 100%; }
         .chart-lbl  { font-size: 9px; color: #888; white-space: nowrap; }
 
-        /* 이달 증권사 공모 건수 */
+        /* ── 증권사별 공모 건수 랭킹 (kokstock API) ── */
         .month-sel-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
         .month-sel-bar select { font-size: 13px; padding: 5px 10px; border-radius: 8px; border: 1px solid #ced4da; }
         .month-sel-bar button {
@@ -117,40 +134,55 @@
             border-radius: 8px; padding: 6px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
         }
         .month-sel-bar button:disabled { background: #adb5bd; cursor: default; }
+        /* 랭킹 리스트 */
         .broker-rank-list { display: flex; flex-direction: column; gap: 8px; }
         .broker-rank-item {
             background: #fff; border-radius: 10px; padding: 10px 14px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.07);
             display: flex; align-items: flex-start; gap: 12px;
         }
+        /* 순위 원형 뱃지 */
         .rank-badge {
             min-width: 32px; height: 32px; border-radius: 50%;
             background: #e7f1ff; color: #0d6efd; font-size: 13px; font-weight: 700;
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
+        /* 1~3위 금/은/동 컬러 */
         .rank-badge.top1 { background: #ffd700; color: #5a4000; }
         .rank-badge.top2 { background: #c0c0c0; color: #333; }
         .rank-badge.top3 { background: #cd7f32; color: #fff; }
         .rank-info { flex: 1; min-width: 0; }
         .rank-name { font-size: 14px; font-weight: 700; color: #222; }
         .rank-cnt  { font-size: 12px; color: #0d6efd; font-weight: 600; margin-bottom: 4px; }
+        /* 참여 종목 목록 (넘치면 말줄임) */
         .rank-ipos { font-size: 11px; color: #6c757d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* 비율 막대 그래프 */
         .bar-wrap  { height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 6px; }
         .bar-fill  { height: 6px; background: #0d6efd; border-radius: 3px; transition: width 0.4s; }
     </style>
 </head>
 <body>
 
+<!-- ════════════════════════════════════════════
+     상단 타이틀 바
+     ════════════════════════════════════════════ -->
 <div class="top-bar">
     <h1>📈 통계</h1>
 </div>
 
+<!-- ════════════════════════════════════════════
+     연도 필터 바
+     - 선택한 연도에 맞춰 모든 통계 데이터 갱신
+     ════════════════════════════════════════════ -->
 <div class="filter-bar">
     <label>연도</label>
     <select id="yearSelect"></select>
 </div>
 
-<!-- ── 요약 + 월별 차트 ── -->
+<!-- ════════════════════════════════════════════
+     연간 요약 카드 섹션
+     - 총 수익, 수수료 합계, 미확정 건수 표시
+     ════════════════════════════════════════════ -->
 <div class="section">
     <div class="section-title">📊 연간 요약</div>
     <div class="summary-grid" id="summaryGrid">
@@ -158,6 +190,11 @@
     </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     월별 수익 막대 차트 섹션
+     - CSS 기반 막대 그래프 (Chart.js 미사용)
+     - soldDate 또는 listingDate 기준 월별 집계
+     ════════════════════════════════════════════ -->
 <div class="section">
     <div class="section-title">📅 월별 수익</div>
     <div class="chart-wrap">
@@ -165,7 +202,11 @@
     </div>
 </div>
 
-<!-- ── 이달 증권사별 공모 참여 건수 (kokstock) ── -->
+<!-- ════════════════════════════════════════════
+     증권사별 공모 참여 건수 섹션 (kokstock API)
+     - 선택한 연월의 공모주 일정에서 증권사별 건수 집계
+     - 각 종목의 상세 API를 순차 호출하여 증권사 정보 추출
+     ════════════════════════════════════════════ -->
 <div class="section">
     <div class="section-title">🏦 증권사별 공모 참여 건수 (kokstock)</div>
     <div class="month-sel-bar">
@@ -180,6 +221,10 @@
     </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     증권사별 월별 청약 건수 피벗 테이블 섹션 (내 기록 기반)
+     - 로컬 DB의 청약 내역을 증권사 × 월로 교차 집계
+     ════════════════════════════════════════════ -->
 <div class="section">
     <div class="section-title">증권사별 월별 청약 건수 (내 기록)</div>
     <div class="tbl-wrap" id="brokerTableWrap">
@@ -187,6 +232,10 @@
     </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     계좌별 수익 현황 섹션
+     - 각 계좌의 청약 건수, 총 수익, 미확정 건수 표시
+     ════════════════════════════════════════════ -->
 <div class="section">
     <div class="section-title">계좌별 수익 현황</div>
     <div class="acc-grid" id="accGrid">
@@ -194,6 +243,9 @@
     </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     하단 탭 네비게이션
+     ════════════════════════════════════════════ -->
 <nav class="bottom-nav">
     <a href="index.html"><span>📊</span>대시보드</a>
     <a href="ipo.html"><span>📋</span>청약내역</a>
@@ -206,10 +258,15 @@
 <script src="js/db.js"></script>
 <script src="js/kokstock.js"></script>
 <script>
+    // 월 이름 배열 (인덱스 0 = 1월)
     const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-    const ACCOUNTS = getAccountNames(); // 설정에서 관리 (db.js: getAccountNames)
+    // 설정에서 관리하는 계좌 이름 목록 (db.js: getAccountNames)
+    const ACCOUNTS = getAccountNames();
 
-    // 연도 셀렉터
+    /**
+     * 연도 선택 드롭다운 초기화 (즉시 실행 함수)
+     * 현재 연도부터 3년 전까지 옵션으로 추가합니다.
+     */
     (function initYear() {
         const sel = document.getElementById('yearSelect');
         const cur = new Date().getFullYear();
@@ -221,7 +278,12 @@
         sel.value = cur;
     })();
 
-    // ── 증권사 공모 건수 조회 (kokstock) ──────────────────
+    /**
+     * 증권사별 공모 건수 조회를 위한 연월 셀렉터 초기화 (즉시 실행 함수)
+     * - 연도: 현재 연도 ~ 2년 전
+     * - 월: 1월 ~ 12월
+     * - 기본값: 현재 연월
+     */
     (function initBsSelectors() {
         const now  = new Date();
         const ysel = document.getElementById('bsYear');
@@ -239,9 +301,18 @@
             o.textContent = m + '월';
             msel.appendChild(o);
         }
+        // 현재 월을 기본값으로 설정
         msel.value = now.getMonth() + 1;
     })();
 
+    /**
+     * 선택한 연월의 공모주 일정을 kokstock API에서 조회하고
+     * 증권사별 참여 건수를 집계하여 랭킹 목록으로 표시합니다.
+     * 처리 순서:
+     * 1. getKokstockSchedulesByMonth()로 해당 월 전체 일정 조회
+     * 2. 각 종목의 getKokstockDetail()로 증권사 배정 정보 조회 (순차 처리)
+     * 3. 증권사별 건수 집계 → 내림차순 정렬 → 랭킹 HTML 렌더링
+     */
     async function loadBrokerStats() {
         const year  = parseInt(document.getElementById('bsYear').value);
         const month = parseInt(document.getElementById('bsMonth').value);
@@ -260,8 +331,8 @@
             }
 
             // 각 종목 detail fetch → 증권사 집계
-            const countMap = {};
-            const iposMap  = {};
+            const countMap = {}; // 증권사명 → 참여 건수
+            const iposMap  = {}; // 증권사명 → 종목명 배열 (참여 종목 목록)
             for (const s of schedules) {
                 if (!s.idx) continue;
                 try {
@@ -273,20 +344,22 @@
                         if (!iposMap[b.name]) iposMap[b.name] = [];
                         iposMap[b.name].push(s.corpName);
                     }
-                } catch (e) { /* 개별 실패 무시 */ }
+                } catch (e) { /* 개별 종목 실패 무시 (네트워크 오류 등) */ }
             }
 
+            // 건수 내림차순 정렬
             const sorted = Object.entries(countMap).sort((a, b) => b[1] - a[1]);
             if (!sorted.length) {
                 wrap.innerHTML = '<div style="text-align:center;padding:20px;color:#adb5bd">증권사 정보 없음</div>';
                 return;
             }
 
-            const max = sorted[0][1];
+            const max = sorted[0][1]; // 최대 건수 (막대 비율 계산용)
+            // 순위별 뱃지 CSS 클래스 결정 (1~3위 금/은/동)
             const rankClass = (i) => i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
             let html = '<div class="broker-rank-list">';
             sorted.forEach(([name, cnt], i) => {
-                const pct  = Math.round((cnt / max) * 100);
+                const pct  = Math.round((cnt / max) * 100); // 최대 건수 대비 비율(%)
                 const ipos = (iposMap[name] || []).join(', ');
                 html += `
                 <div class="broker-rank-item">
@@ -304,16 +377,28 @@
         } catch (e) {
             wrap.innerHTML = '<div style="text-align:center;padding:20px;color:#dc3545">오류: ' + e.message + '</div>';
         } finally {
+            // 성공/실패 모두 버튼 복원
             btn.disabled = false;
             btn.textContent = '조회';
         }
     }
 
+    /**
+     * 수익 금액을 '+/-' 부호와 '원' 단위로 포맷합니다.
+     * @param {number|null} n - 포맷할 금액 (null이면 '-' 반환)
+     * @returns {string} 포맷된 문자열 (예: '+1,500,000원')
+     */
     function fmt(n) {
         if (n == null) return '-';
         return (n >= 0 ? '+' : '') + n.toLocaleString('ko-KR') + '원';
     }
 
+    /**
+     * 금액을 만원 단위 축약 형식으로 포맷합니다.
+     * 1만원 이상이면 '만' 단위로 표시, 미만이면 원 단위로 표시합니다.
+     * @param {number} n - 포맷할 금액
+     * @returns {string} 포맷된 문자열 (예: '+15.2만', '+8,500원')
+     */
     function fmtW(n) {
         if (!n) return '0원';
         const abs = Math.abs(Math.round(n));
@@ -322,11 +407,18 @@
         return sign + abs.toLocaleString('ko-KR') + '원';
     }
 
-    /* ── 연간 요약 카드 ── */
+    /**
+     * 연간 요약 카드를 구성하고 summaryGrid에 렌더링합니다.
+     * - 총 수익: 수익이 확정된(profit != null) 항목의 합계
+     * - 수수료 합계: 세금+매도수수료 + 청약수수료의 합계
+     * - 미확정: 아직 매도하지 않은 항목 수
+     * @param {Array} list - getIposByYear()가 반환한 IPO 배열
+     */
     function buildSummary(list) {
         const grid = document.getElementById('summaryGrid');
         const done   = list.filter(i => i.profit != null);
         const totalP = done.reduce((s, i) => s + i.profit, 0);
+        // 세금+수수료 합계 (taxAndFee + subscriptionFee)
         const totalFee = list.reduce((s, i) =>
             s + Number(i.taxAndFee || 0) + Number(i.subscriptionFee || 0), 0);
         const pending = list.filter(i => i.profit == null).length;
@@ -339,6 +431,7 @@
             </div>
             <div class="sum-card">
                 <div class="sum-label">수수료 합계</div>
+                <!-- 수수료는 비용이므로 음수로 표시 -->
                 <div class="sum-value">${fmtW(-totalFee)}</div>
             </div>
             <div class="sum-card">
@@ -347,10 +440,16 @@
             </div>`;
     }
 
-    /* ── 월별 수익 막대 차트 ── */
+    /**
+     * 월별 수익 막대 차트를 CSS 기반으로 구성하고 monthChart에 렌더링합니다.
+     * - soldDate 또는 listingDate에서 월을 추출하여 집계
+     * - 최대 절댓값을 기준으로 막대 높이 비율 계산 (최대 90px)
+     * - 양수: 빨간 막대, 음수: 파란 막대, 제로: 회색 얇은 막대
+     * @param {Array} list - getIposByYear()가 반환한 IPO 배열
+     */
     function buildChart(list) {
         const wrap = document.getElementById('monthChart');
-        // 월별 수익 집계 (soldDate 기준)
+        // 월별 수익 집계 (soldDate 기준, 없으면 listingDate)
         const monthly = {};
         for (let m = 1; m <= 12; m++) monthly[m] = 0;
         list.forEach(i => {
@@ -362,10 +461,11 @@
         });
 
         const vals   = Object.values(monthly);
-        const maxAbs = Math.max(...vals.map(Math.abs), 1);
+        const maxAbs = Math.max(...vals.map(Math.abs), 1); // 0 나누기 방지
 
         wrap.innerHTML = Object.entries(monthly).map(([m, v]) => {
             const pct = Math.abs(v) / maxAbs * 90; // 최대 90px
+            // 수익/손실/제로에 따라 막대 스타일 구분
             const bar = v > 0
                 ? `<div class="bar-pos" style="height:${pct}px"></div>`
                 : v < 0
@@ -375,26 +475,37 @@
         }).join('');
     }
 
+    /**
+     * 선택된 연도의 전체 통계를 로드하고 각 섹션을 순차적으로 빌드합니다.
+     * @param {number|string} year - 조회할 연도
+     */
     async function buildStats(year) {
         const list = await getIposByYear(parseInt(year));
 
-        buildSummary(list);
-        buildChart(list);
-        buildBrokerTable(list);
-        buildAccGrid(list);
+        buildSummary(list);       // 연간 요약 카드
+        buildChart(list);         // 월별 수익 차트
+        buildBrokerTable(list);   // 증권사 × 월 피벗 테이블
+        buildAccGrid(list);       // 계좌별 수익 카드
     }
 
-    /* ── 증권사 × 월 피벗 ── */
+    /**
+     * 내 청약 기록 기반의 증권사 × 월 피벗 테이블을 구성합니다.
+     * - 청약 시작일(또는 상장일) 기준으로 월 분류
+     * - 셀: 청약 건수 (위) + 수익 합계 (아래, 수익/손실 색상 구분)
+     * - 마지막 행(tfoot)에 월별 합계 표시
+     * @param {Array} list - getIposByYear()가 반환한 IPO 배열
+     */
     function buildBrokerTable(list) {
         const wrap = document.getElementById('brokerTableWrap');
 
-        // 청약 시작일 기준 월 분류
+        // 증권사 Set + 데이터 맵 구성
         const brokerSet = new Set();
-        const data = {};   // broker → { m: { cnt, profit } }
+        const data = {};   // broker → { 월: { cnt, profit } }
 
         list.forEach(item => {
             const b = item.broker;
             if (!b) return;
+            // 청약 시작일 기준, 없으면 상장일 기준
             const dateStr = item.subscriptionStartDate || item.listingDate;
             if (!dateStr) return;
             const m = parseInt(dateStr.substring(5, 7));
@@ -407,6 +518,7 @@
             if (item.profit != null) data[b][m].profit += item.profit;
         });
 
+        // 증권사 목록 가나다 정렬
         const brokers = [...brokerSet].sort((a, b) => a.localeCompare(b, 'ko'));
 
         if (!brokers.length) {
@@ -414,7 +526,7 @@
             return;
         }
 
-        // 월 합계
+        // 월별 합계 계산 (tfoot 행용)
         const monthTotals = {};
         for (let m = 1; m <= 12; m++) {
             monthTotals[m] = { cnt: 0, profit: 0 };
@@ -426,29 +538,35 @@
             });
         }
 
+        // 헤더 생성 (증권사 + 1~12월 + 합계)
         let html = '<table class="pivot"><thead><tr><th>증권사</th>';
         for (let m = 1; m <= 12; m++) html += `<th>${MONTHS[m-1]}</th>`;
         html += '<th>합계</th></tr></thead><tbody>';
 
+        // 각 증권사 행 생성
         brokers.forEach(b => {
             let rowCnt = 0, rowProfit = 0;
             html += `<tr><td>${b}</td>`;
             for (let m = 1; m <= 12; m++) {
                 const cell = data[b]?.[m];
                 if (!cell || cell.cnt === 0) {
+                    // 데이터 없는 셀
                     html += '<td class="cell-zero">-</td>';
                 } else {
                     rowCnt    += cell.cnt;
                     rowProfit += cell.profit;
+                    // 수익/손실 CSS 클래스 결정
                     const pCls = cell.profit > 0 ? 'cell-profit' : cell.profit < 0 ? 'cell-loss' : '';
                     const pTxt = cell.profit !== 0 ? `<div class="${pCls}">${fmt(Math.round(cell.profit))}</div>` : '';
                     html += `<td><div class="cell-cnt">${cell.cnt}</div>${pTxt}</td>`;
                 }
             }
+            // 행 합계 셀
             const rCls = rowProfit > 0 ? 'cell-profit' : rowProfit < 0 ? 'cell-loss' : '';
             html += `<td><div class="cell-cnt">${rowCnt}</div><div class="${rCls}">${fmt(Math.round(rowProfit))}</div></td></tr>`;
         });
 
+        // 합계 행 (tfoot) 생성
         html += '</tbody><tfoot><tr><td>합계</td>';
         let grandCnt = 0, grandProfit = 0;
         for (let m = 1; m <= 12; m++) {
@@ -461,20 +579,28 @@
                 html += `<td><div class="cell-cnt">${t.cnt}</div><div class="${pCls}">${fmt(Math.round(t.profit))}</div></td>`;
             }
         }
+        // 전체 합계 셀
         const gCls = grandProfit > 0 ? 'cell-profit' : grandProfit < 0 ? 'cell-loss' : '';
         html += `<td><div class="cell-cnt">${grandCnt}</div><div class="${gCls}">${fmt(Math.round(grandProfit))}</div></td></tr></tfoot></table>`;
 
         wrap.innerHTML = html;
     }
 
-    /* ── 계좌별 수익 ── */
+    /**
+     * 계좌별 수익 현황 카드를 2열 그리드로 구성합니다.
+     * - IPO 항목의 accounts 필드(CSV)를 파싱하여 계좌별로 분류
+     * - 각 계좌에 대해 청약 건수, 수익 합계, 미확정 건수 표시
+     * @param {Array} list - getIposByYear()가 반환한 IPO 배열
+     */
     function buildAccGrid(list) {
         const grid = document.getElementById('accGrid');
+        // 각 계좌별 초기 집계 구조
         const acc = {};
         ACCOUNTS.forEach(a => { acc[a] = { cnt: 0, profit: 0, pending: 0 }; });
 
         list.forEach(item => {
             if (!item.accounts) return;
+            // accounts는 쉼표로 구분된 계좌명 문자열
             const names = item.accounts.split(',').map(s => s.trim()).filter(Boolean);
             names.forEach(name => {
                 if (!acc[name]) return;
@@ -501,16 +627,19 @@
                 </div>
             </div>`;
         });
+        // 데이터가 없으면 안내 메시지
         grid.innerHTML = html || '<div style="grid-column:span 2;text-align:center;color:#adb5bd">데이터 없음</div>';
     }
 
+    // 연도 선택 변경 이벤트: 선택된 연도로 통계 재계산
     document.getElementById('yearSelect').addEventListener('change', function () {
         buildStats(this.value);
     });
 
+    // 초기 통계 로드 (현재 선택된 연도)
     buildStats(document.getElementById('yearSelect').value);
-    initTabSwipe();
-    initPullRefresh();
+    initTabSwipe();    // 탭 간 스와이프 제스처 초기화 (swipe.js)
+    initPullRefresh(); // 당겨서 새로고침 초기화 (swipe.js)
 </script>
 </body>
 </html>

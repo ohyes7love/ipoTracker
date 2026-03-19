@@ -8,6 +8,7 @@
     <style>
         body { background: #f5f6fa; padding-bottom: 80px; font-size: 14px; }
 
+        /* ── 하단 네비게이션 바 ── */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
             background: #0d6efd; display: flex; border-top: 1px solid #0b5ed7;
@@ -19,6 +20,7 @@
         .bottom-nav a.active { color: #fff; font-weight: 700; }
         .bottom-nav a span { display: block; font-size: 18px; }
 
+        /* ── 상단 고정 타이틀 바 ── */
         .top-bar {
             background: #0d6efd; color: #fff; padding: 12px 16px;
             display: flex; align-items: center; justify-content: space-between;
@@ -26,6 +28,7 @@
         }
         .top-bar h1 { font-size: 16px; margin: 0; font-weight: 700; }
 
+        /* ── 필터 + 추가 버튼 바 ── */
         .filter-bar {
             padding: 10px 12px; background: #fff;
             border-bottom: 1px solid #e0e0e0;
@@ -39,8 +42,10 @@
             display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
 
+        /* ── IPO 카드 목록 영역 ── */
         .ipo-list { padding: 10px 12px; }
 
+        /* ── 개별 IPO 카드 ── */
         .ipo-card {
             background: #fff; border-radius: 12px; margin-bottom: 10px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
@@ -52,18 +57,22 @@
         .stock-name { font-size: 15px; font-weight: 700; color: #222; }
         .card-actions { display: flex; gap: 4px; flex-shrink: 0; }
         .account-checks { display: flex; gap: 8px; flex-wrap: wrap; }
+        /* 계좌 체크박스 레이블 스타일 */
         .acc-check {
             display: flex; align-items: center; gap: 5px;
             background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 20px;
             padding: 5px 12px; font-size: 13px; cursor: pointer; user-select: none;
         }
         .acc-check input { cursor: pointer; accent-color: #0d6efd; width: 15px; height: 15px; }
+        /* 선택된 계좌는 파란색 강조 */
         .acc-check:has(input:checked) { background: #e7f1ff; border-color: #0d6efd; color: #0d6efd; font-weight: 600; }
+        /* 카드 내 계좌 태그 */
         .acc-tag {
             display: inline-block; background: #e7f1ff; color: #0d6efd;
             border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600; margin-right: 3px;
         }
         .ipo-card { cursor: pointer; }
+        /* 출금 버튼: 미출금=초록테두리, 완료=초록배경 */
         .btn-withdraw {
             background: #fff; color: #198754; border: 1.5px solid #198754;
             border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; white-space: nowrap;
@@ -71,22 +80,27 @@
         .btn-withdraw.done {
             background: #d1e7dd; color: #0a3622; border-color: #a3cfbb; cursor: default; font-weight: 600;
         }
+        /* 아이콘 버튼 (복사, 삭제) */
         .btn-icon {
             background: none; border: none; font-size: 18px;
             cursor: pointer; padding: 2px 4px; border-radius: 6px; line-height: 1;
         }
         .btn-icon:active { background: rgba(0,0,0,0.08); }
         .ipo-card-body { padding: 4px 14px 12px; }
+        /* 종목 상세 정보 행 */
         .info-row { display: flex; flex-wrap: wrap; gap: 4px 16px; color: #555; font-size: 12px; margin-bottom: 4px; }
         .info-row span { white-space: nowrap; }
+        /* 수익 표시 영역 */
         .profit-row {
             display: flex; justify-content: flex-end; align-items: baseline;
             gap: 8px; margin-top: 6px;
         }
         .profit-val { font-size: 16px; font-weight: 700; }
         .profit-rate { font-size: 13px; font-weight: 600; }
+        /* 수익 컬러: 양수=빨강, 음수=파랑 */
         .profit-plus { color: #dc3545; }
         .profit-minus { color: #0d6efd; }
+        /* D-Day 뱃지: 당일=빨강 깜박임, 임박=주황, 지남=회색 */
         .dday         { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 1px 5px; vertical-align: middle; }
         .dday-today   { background: #dc3545; color: #fff; animation: pulse 1.2s infinite; }
         .dday-soon    { color: #fd7e14; }
@@ -94,6 +108,7 @@
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
         .profit-zero  { color: #6c757d; }
 
+        /* ── 하단 합계 수익 고정 바 ── */
         .total-bar {
             position: fixed; bottom: 56px; left: 0; right: 0; z-index: 99;
             background: #1e2a3a; color: #fff; padding: 10px 16px;
@@ -103,6 +118,7 @@
         .total-bar .label { color: #adb5bd; }
         .total-bar .amount { font-size: 18px; font-weight: 700; }
 
+        /* ── 종목명 자동완성 드롭다운 ── */
         #stockAutocomplete {
             display: none; position: fixed; z-index: 9999;
             background: #fff; border: 1px solid #ced4da; border-top: none;
@@ -116,6 +132,7 @@
         #stockAutocomplete div:last-child { border-bottom: none; }
         #stockAutocomplete div:active, #stockAutocomplete div:hover { background: #e9f0ff; }
 
+        /* ── Bootstrap 모달 (바텀시트 스타일) ── */
         .modal-dialog { margin: 0; max-width: 100%; }
         .modal-content { border-radius: 16px 16px 0 0; }
         .modal.fade  .modal-dialog { transition: opacity 0.2s ease; opacity: 0; }
@@ -131,8 +148,10 @@
         .modal-footer { border-top: 1px solid #eee; padding: 10px 16px; }
         .modal-body { padding: 14px 16px; max-height: 70vh; overflow-y: auto; }
 
+        /* ── 빈 상태 안내 ── */
         .empty-state { text-align: center; padding: 48px 0; color: #adb5bd; font-size: 14px; }
 
+        /* ── 필터 칩 (전체/미출금) ── */
         .filter-chips { display: flex; gap: 5px; }
         .fchip {
             background: #f0f0f0; color: #555; border: none;
@@ -140,6 +159,7 @@
             cursor: pointer; font-weight: 500; white-space: nowrap;
         }
         .fchip.active { background: #0d6efd; color: #fff; font-weight: 700; }
+        /* 정렬 선택 드롭다운 */
         .sort-sel {
             font-size: 12px; padding: 5px 8px; border-radius: 16px;
             border: 1px solid #ced4da; color: #555; background: #fff;
@@ -148,10 +168,20 @@
 </head>
 <body>
 
+<!-- ════════════════════════════════════════════
+     상단 타이틀 바
+     ════════════════════════════════════════════ -->
 <div class="top-bar">
     <h1>청약 내역</h1>
 </div>
 
+<!-- ════════════════════════════════════════════
+     필터 바
+     - 연도 선택 드롭다운
+     - 전체 / 미출금 필터 칩
+     - 최신순 / 수익순 정렬 선택
+     - '+' 버튼: 새 청약 등록 모달 오픈
+     ════════════════════════════════════════════ -->
 <div class="filter-bar">
     <select id="yearSelect"></select>
     <div class="filter-chips">
@@ -165,15 +195,26 @@
     <button class="btn-add" onclick="openCreateModal()" title="등록">＋</button>
 </div>
 
+<!-- ════════════════════════════════════════════
+     IPO 카드 목록 컨테이너
+     - loadTable()에 의해 동적으로 렌더링됨
+     ════════════════════════════════════════════ -->
 <div class="ipo-list" id="ipoList">
     <div class="empty-state">데이터를 불러오는 중...</div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     하단 합계 수익 고정 바
+     - 현재 필터/정렬 기준 목록의 합계 수익 표시
+     ════════════════════════════════════════════ -->
 <div class="total-bar">
     <span class="label">합계 수익</span>
     <span class="amount profit-zero" id="totalSum">0 원</span>
 </div>
 
+<!-- ════════════════════════════════════════════
+     하단 탭 네비게이션
+     ════════════════════════════════════════════ -->
 <nav class="bottom-nav">
     <a href="index.html"><span>📊</span>대시보드</a>
     <a href="ipo.html" class="active"><span>📋</span>청약내역</a>
@@ -182,9 +223,14 @@
     <a href="stats.html"><span>📈</span>통계</a>
 </nav>
 
+<!-- 종목명 자동완성 드롭다운 컨테이너 (position:fixed로 모달 위에 표시) -->
 <div id="stockAutocomplete"></div>
 
-<!-- 등록/수정 모달 -->
+<!-- ════════════════════════════════════════════
+     청약 등록/수정 모달 (바텀시트 방식)
+     - 신규 등록(openCreateModal) / 수정(openEditModal) 공용
+     - formId가 비어있으면 신규, 있으면 수정
+     ════════════════════════════════════════════ -->
 <div class="modal fade" id="ipoModal" tabindex="-1">
     <div class="modal-dialog" style="position:fixed;bottom:0;width:100%;margin:0;">
         <div class="modal-content">
@@ -194,20 +240,24 @@
             </div>
             <div class="modal-body">
                 <form id="ipoForm" autocomplete="off">
+                    <!-- 수정 시 ID 보관 (hidden) -->
                     <input type="hidden" id="formId">
 
+                    <!-- 공모주명 입력 (자동완성 지원) -->
                     <div class="mb-3">
                         <label class="form-label">공모주명</label>
                         <input type="text" class="form-control" id="stockName"
                                required placeholder="종목명 검색 (예: 삼성, 카카오)">
                     </div>
 
+                    <!-- 계좌 다중 선택 체크박스 (db.js의 getAccountNames()로 동적 생성) -->
                     <div class="mb-3">
                         <label class="form-label">계좌</label>
                         <!-- 계좌 체크박스: db.js의 getAccountNames()로 동적 생성 -->
                         <div class="account-checks" id="accountChecks"></div>
                     </div>
 
+                    <!-- 증권사 선택 + 청약 수수료 입력 -->
                     <div class="row g-2 mb-3">
                         <div class="col-7">
                             <label class="form-label">증권사</label>
@@ -221,6 +271,7 @@
                         </div>
                     </div>
 
+                    <!-- 공모가 + 매도 수량 -->
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label class="form-label">공모가 (원)</label>
@@ -232,6 +283,7 @@
                         </div>
                     </div>
 
+                    <!-- 매도일 + 매도가 -->
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label class="form-label">매도일</label>
@@ -243,12 +295,14 @@
                         </div>
                     </div>
 
+                    <!-- 세금 + 매도 수수료 합산 입력 -->
                     <div class="mb-3">
                         <label class="form-label">세금+매도수수료 (원)</label>
                         <input type="number" class="form-control" id="taxAndFee" value="0" inputmode="numeric">
                     </div>
 
                     <hr class="my-2">
+                    <!-- 청약 기간 입력 (청약시작일 ~ 청약종료일) -->
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label class="form-label">청약시작일</label>
@@ -259,6 +313,7 @@
                             <input type="date" class="form-control" id="subscriptionEndDate">
                         </div>
                     </div>
+                    <!-- 상장일 입력 (D-Day 계산 기준) -->
                     <div class="mb-2">
                         <label class="form-label">상장일</label>
                         <input type="date" class="form-control" id="listingDate">
@@ -278,11 +333,20 @@
 <script src="js/kokstock.js"></script>
 <script src="js/db.js"></script>
 <script>
+    // 현재 연도 (초기 데이터 로드 기준)
     const currentYear = new Date().getFullYear();
+    // 증권사별 기본 청약 수수료 맵 { 증권사명: 수수료 }
     let brokerFees = {};
+    // 로컬 DB에 저장된 종목 목록 (자동완성용 캐시)
     let localStocks = [];
+    // 현재 필터 상태: 'all' | 'pending'
     let currentFilter = 'all';
 
+    /**
+     * 필터 칩 선택 처리 함수.
+     * 전체/미출금 필터를 전환하고 목록을 재로드합니다.
+     * @param {string} f - 'all' 또는 'pending'
+     */
     function setFilter(f) {
         currentFilter = f;
         document.getElementById('fchipAll').classList.toggle('active', f === 'all');
@@ -290,7 +354,10 @@
         loadTable(document.getElementById('yearSelect').value);
     }
 
-    // 계좌 체크박스 동적 생성 (설정에서 변경 가능)
+    /**
+     * 계좌 체크박스 동적 생성 (즉시 실행 함수)
+     * getAccountNames()로 설정된 계좌 이름을 읽어 체크박스 UI를 렌더링합니다.
+     */
     (function renderAccountChecks() {
         document.getElementById('accountChecks').innerHTML =
             getAccountNames().map(name =>
@@ -298,7 +365,10 @@
             ).join('');
     })();
 
-    // 연도 셀렉터
+    /**
+     * 연도 선택 드롭다운 초기화 (즉시 실행 함수)
+     * 현재 연도 -2년 ~ +1년 범위를 옵션으로 추가합니다.
+     */
     (function initYearSelect() {
         const sel = document.getElementById('yearSelect');
         for (let y = currentYear - 2; y <= currentYear + 1; y++) {
@@ -309,7 +379,11 @@
         }
     })();
 
-    // 증권사 수수료 로드
+    /**
+     * 증권사 목록 로드 및 셀렉트 박스 옵션 생성.
+     * 브로커 수수료 맵(brokerFees)도 함께 구성합니다.
+     * 증권사 변경 시 subscriptionFee 자동 채움에 사용됩니다.
+     */
     getAllBrokerFees().then(fees => {
         const sel = document.getElementById('broker');
         fees.sort((a, b) => a.brokerName.localeCompare(b.brokerName, 'ko'));
@@ -322,18 +396,27 @@
         });
     });
 
-    // 로컬 DB 종목 로드
+    // 로컬 DB 종목 목록을 캐시 (자동완성용)
     getAllIpoStocks().then(data => { localStocks = data; }).catch(() => {});
 
     // ── 자동완성 ─────────────────────────────────────────
     const stockInput = document.getElementById('stockName');
     const acDiv      = document.getElementById('stockAutocomplete');
+    // 자동완성 debounce 타이머
     let acTimer = null;
 
+    /**
+     * 자동완성 드롭다운을 렌더링합니다.
+     * - dbHits: 로컬 DB에서 검색된 종목 (공모가 표시)
+     * - kokSchedules: kokstock API에서 검색된 종목 (청약일 + 확정공모가 자동채움)
+     * @param {Array} dbHits - 로컬 DB 매칭 종목 배열
+     * @param {Array} kokSchedules - kokstock 일정 매칭 종목 배열
+     */
     function renderAC(dbHits, kokSchedules) {
         const kokOnly = kokSchedules;
         if (!dbHits.length && !kokOnly.length) { acDiv.style.display = 'none'; return; }
 
+        // 입력 필드 위치에 맞춰 드롭다운 위치 설정
         const r = stockInput.getBoundingClientRect();
         acDiv.style.top   = r.bottom + 'px';
         acDiv.style.left  = r.left + 'px';
@@ -346,11 +429,13 @@
             div.textContent = s.offeringPrice
                 ? s.stockName + ' (' + Number(s.offeringPrice).toLocaleString() + '원)'
                 : s.stockName;
+            // 선택 시 종목명과 공모가를 폼 필드에 자동 채움
             const pick = () => {
                 stockInput.value = s.stockName;
                 if (s.offeringPrice) document.getElementById('offeringPrice').value = s.offeringPrice;
                 acDiv.style.display = 'none';
             };
+            // 마우스 클릭과 터치 이벤트 모두 처리
             div.addEventListener('mousedown',  e => { e.preventDefault(); pick(); });
             div.addEventListener('touchstart', e => { e.preventDefault(); pick(); }, { passive: false });
             acDiv.appendChild(div);
@@ -362,13 +447,14 @@
             div.style.color = '#0d6efd';
             const sub = s.subscriptionStartDate ? s.subscriptionStartDate.slice(5).replace('-','/') : '';
             div.textContent = s.corpName + (sub ? '  청약 ' + sub : '');
+            // 선택 시 청약일정과 확정공모가를 폼에 자동 채움
             const pick = async () => {
                 stockInput.value = s.corpName;
                 if (s.subscriptionStartDate) document.getElementById('subscriptionStartDate').value = s.subscriptionStartDate;
                 if (s.subscriptionEndDate)   document.getElementById('subscriptionEndDate').value   = s.subscriptionEndDate;
                 if (s.listingDate)           document.getElementById('listingDate').value           = s.listingDate;
                 acDiv.style.display = 'none';
-                // 확정공모가 자동채움
+                // 확정공모가 자동채움: kokstock 상세 API 호출
                 if (s.idx) {
                     try {
                         const d = await getKokstockDetail(s.idx);
@@ -385,10 +471,16 @@
         acDiv.style.display = 'block';
     }
 
+    /**
+     * 입력값으로 자동완성 목록을 검색하고 표시합니다.
+     * 로컬 DB는 즉시 검색하고, kokstock API는 300ms debounce 후 검색합니다.
+     * @param {string} val - 검색어
+     */
     function showAC(val) {
         if (!val) { acDiv.style.display = 'none'; return; }
         const dbHits = localStocks.filter(s => s.stockName.includes(val));
         renderAC(dbHits, []);
+        // kokstock API 검색은 300ms 딜레이 (불필요한 API 호출 방지)
         clearTimeout(acTimer);
         acTimer = setTimeout(() => {
             searchKokstockSchedule(val).then(schedules => {
@@ -397,18 +489,34 @@
         }, 300);
     }
 
+    // 종목명 입력 이벤트: input(타이핑), focus(클릭), blur(포커스 해제)
     stockInput.addEventListener('input',  function () { showAC(this.value.trim()); });
     stockInput.addEventListener('focus',  function () { showAC(this.value.trim()); });
+    // blur 시 200ms 딜레이 후 숨김 (클릭 이벤트 처리 완료 대기)
     stockInput.addEventListener('blur',   () => setTimeout(() => { acDiv.style.display = 'none'; }, 200));
+    // 모달 닫힐 때 자동완성 드롭다운 숨김
     document.getElementById('ipoModal').addEventListener('hide.bs.modal', () => { acDiv.style.display = 'none'; });
 
+    /**
+     * 증권사 선택 변경 시 해당 증권사의 기본 청약 수수료를 자동 입력합니다.
+     */
     document.getElementById('broker').addEventListener('change', function () {
         const fee = brokerFees[this.value];
         if (fee !== undefined) document.getElementById('subscriptionFee').value = fee;
     });
 
     // ── D-Day 유틸 ───────────────────────────────────────
+    // 오늘 날짜를 00:00:00으로 고정 (시간 비교 오류 방지)
     const _today = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+
+    /**
+     * 날짜 문자열(YYYY-MM-DD)을 받아 D-Day 뱃지 HTML을 반환합니다.
+     * - D-Day: 빨간 배경 깜박임
+     * - D-N (미래): 주황색 텍스트
+     * - D+N (과거): 회색 텍스트
+     * @param {string} dateStr - YYYY-MM-DD 형식 날짜
+     * @returns {string} HTML 문자열
+     */
     function ddayBadge(dateStr) {
         if (!dateStr) return '';
         const t = new Date(dateStr); t.setHours(0,0,0,0);
@@ -419,21 +527,31 @@
     }
 
     // ── 수익 표시 유틸 ───────────────────────────────────
+    /** 숫자를 천단위 콤마 형식으로 변환 (null이면 '-' 반환) */
     function fmt(v) { return v != null ? Number(v).toLocaleString() : '-'; }
+    /** 수익 값에 따른 CSS 클래스 반환 */
     function profitClass(p) {
         if (p == null) return 'profit-zero';
         return p > 0 ? 'profit-plus' : (p < 0 ? 'profit-minus' : 'profit-zero');
     }
+    /** 양수 수익에 '+' 부호를 반환 */
     function profitSign(p) { return (p != null && p > 0) ? '+' : ''; }
 
     // ── 목록 로드 ────────────────────────────────────────
+    /**
+     * 선택된 연도의 IPO 목록을 로드하고 카드 형태로 렌더링합니다.
+     * - 현재 필터(전체/미출금)와 정렬(최신/수익) 적용
+     * - 각 카드에 수익, D-Day, 계좌 정보 표시
+     * - 하단 합계 수익 바 업데이트
+     * @param {number|string} year - 조회할 연도
+     */
     async function loadTable(year) {
         let list = await getIposByYear(year);
 
-        // 필터
+        // 미출금 필터: withdrawn=false인 항목만 표시
         if (currentFilter === 'pending') list = list.filter(d => !d.withdrawn);
 
-        // 정렬
+        // 정렬: 최신순(상장일 내림차순) 또는 수익순(수익 내림차순)
         const sort = document.getElementById('sortSelect')?.value || 'date';
         if (sort === 'profit') {
             list.sort((a, b) => (b.profit ?? -Infinity) - (a.profit ?? -Infinity));
@@ -443,6 +561,7 @@
         const container = document.getElementById('ipoList');
         const totalEl   = document.getElementById('totalSum');
 
+        // 데이터 없음 처리
         if (list.length === 0) {
             container.innerHTML = '<div class="empty-state">등록된 청약 내역이 없습니다.</div>';
             totalEl.textContent = '0 원';
@@ -452,6 +571,7 @@
 
         let totalProfit = 0;
         let html = '';
+        // 각 IPO 항목을 카드 HTML로 변환
         list.forEach(d => {
             const pc         = profitClass(d.profit);
             const profitText = d.profit != null ? profitSign(d.profit) + fmt(d.profit) + '원' : '-';
@@ -460,18 +580,22 @@
 
             if (d.profit != null) totalProfit += d.profit;
 
+            // 수정 모달 오픈을 위해 데이터를 JSON으로 직렬화 (단따옴표 이스케이프)
             const dataStr = JSON.stringify(d).replace(/'/g, '&#39;');
             const isWithdrawn = !!d.withdrawn;
             html += `<div class="ipo-card" onclick='openEditModal(${dataStr})'>
   <div class="ipo-card-header">
     <span class="stock-name">${d.stockName}</span>
     <div class="card-actions" onclick="event.stopPropagation()">
+      <!-- 출금 버튼: 미출금이면 클릭 가능, 출금 완료이면 비활성화 -->
       <button class="btn-withdraw ${isWithdrawn ? 'done' : ''}"
               onclick="${isWithdrawn ? '' : `toggleWithdrawn(${d.id})`}"
               ${isWithdrawn ? 'disabled' : ''}>
         ${isWithdrawn ? '✅ 출금완료' : '💸 출금'}
       </button>
+      <!-- 복사 버튼: 동일 종목을 다른 계좌로 복사 등록 시 사용 -->
       <button class="btn-icon" onclick='openCopyModal(${dataStr})' title="복사">📋</button>
+      <!-- 삭제 버튼 -->
       <button class="btn-icon" onclick='deleteItem(${d.id})' title="삭제">🗑️</button>
     </div>
   </div>
@@ -499,11 +623,16 @@
         });
 
         container.innerHTML = html;
+        // 합계 수익 바 업데이트
         totalEl.textContent = profitSign(totalProfit) + totalProfit.toLocaleString() + ' 원';
         totalEl.className   = 'amount ' + profitClass(totalProfit);
     }
 
     // ── 모달 ─────────────────────────────────────────────
+    /**
+     * 새 청약 등록 모달을 엽니다.
+     * 모든 폼 필드를 초기값으로 리셋합니다.
+     */
     function openCreateModal() {
         document.getElementById('modalTitle').textContent = '청약 등록';
         document.getElementById('ipoForm').reset();
@@ -518,21 +647,40 @@
         new bootstrap.Modal(document.getElementById('ipoModal')).show();
     }
 
+    /**
+     * 계좌 체크박스 선택 상태를 CSV 문자열로부터 복원합니다.
+     * @param {string} csv - 쉼표로 구분된 계좌 이름 문자열
+     */
     function setAccounts(csv) {
         document.querySelectorAll('input[name="account"]').forEach(cb => {
             cb.checked = csv ? csv.split(',').map(s => s.trim()).includes(cb.value) : false;
         });
     }
+
+    /**
+     * 현재 체크된 계좌 이름을 쉼표로 연결하여 반환합니다.
+     * @returns {string} 쉼표로 구분된 계좌 이름 문자열
+     */
     function getAccounts() {
         return [...document.querySelectorAll('input[name="account"]:checked')].map(cb => cb.value).join(',');
     }
 
+    /**
+     * 복사 모달을 엽니다.
+     * 기존 데이터로 폼을 채우되 ID를 비워 새 항목으로 저장되게 합니다.
+     * @param {Object} d - 복사할 IPO 데이터 객체
+     */
     function openCopyModal(d) {
         openEditModal(d);
         document.getElementById('modalTitle').textContent = '청약 복사';
         document.getElementById('formId').value = '';
     }
 
+    /**
+     * 수정 모달을 엽니다.
+     * 선택된 IPO 데이터로 모든 폼 필드를 채웁니다.
+     * @param {Object} d - 수정할 IPO 데이터 객체
+     */
     function openEditModal(d) {
         document.getElementById('modalTitle').textContent      = '청약 수정';
         document.getElementById('formId').value                = d.id;
@@ -551,6 +699,14 @@
         new bootstrap.Modal(document.getElementById('ipoModal')).show();
     }
 
+    /**
+     * IPO 저장 처리 함수 (등록 또는 수정).
+     * formId가 있으면 updateIpo(), 없으면 createIpo()를 호출합니다.
+     * 저장 후:
+     * - 모달을 닫고 목록을 재로드
+     * - 새 종목이면 로컬 캐시(localStocks)에 추가
+     * - 체크리스트에서 넘어온 경우 registered 플래그를 업데이트
+     */
     async function saveIpo() {
         const id   = document.getElementById('formId').value;
         const year = parseInt(document.getElementById('yearSelect').value);
@@ -571,12 +727,13 @@
             year
         };
 
+        // formId 유무로 수정/신규 분기
         const saved = id ? await updateIpo(id, body) : await createIpo(body);
 
         bootstrap.Modal.getInstance(document.getElementById('ipoModal')).hide();
         loadTable(year);
 
-        // 로컬 종목 캐시 업데이트
+        // 로컬 종목 캐시 업데이트 (자동완성에 새 종목 반영)
         if (saved && saved.stockName && !localStocks.find(s => s.stockName === saved.stockName)) {
             localStocks.push({ stockName: saved.stockName, offeringPrice: saved.offeringPrice });
         }
@@ -592,31 +749,51 @@
         }
     }
 
+    /**
+     * 출금 처리 토글 함수.
+     * 확인 다이얼로그 후 patchIpoWithdrawn()으로 출금 완료 처리합니다.
+     * @param {number} id - IPO 항목 ID
+     */
     async function toggleWithdrawn(id) {
         if (!confirm('출금 처리하시겠습니까?\n(취소하려면 수정 버튼을 이용하세요)')) return;
         await patchIpoWithdrawn(id, true);
         loadTable(document.getElementById('yearSelect').value);
     }
 
+    /**
+     * IPO 항목 삭제 함수.
+     * 확인 다이얼로그 후 deleteIpo()를 호출합니다.
+     * @param {number} id - IPO 항목 ID
+     */
     async function deleteItem(id) {
         if (!confirm('삭제하시겠습니까?')) return;
         await deleteIpo(id);
         loadTable(document.getElementById('yearSelect').value);
     }
 
+    // 연도 선택 변경 이벤트: 선택된 연도로 데이터 재로드
     document.getElementById('yearSelect').addEventListener('change', function () {
         loadTable(this.value);
     });
 
-    // 대시보드 미출금 카드에서 넘어온 경우
+    // 대시보드 미출금 카드에서 '?filter=pending' URL 파라미터로 넘어온 경우 필터 자동 설정
     if (new URLSearchParams(location.search).get('filter') === 'pending') {
         setFilter('pending');
     }
+    // 초기 목록 로드
     loadTable(currentYear);
 
     // ── 캘린더/체크리스트에서 넘어온 경우 자동 등록 모달 오픈 ──
-    let _checklistSource = null; // 체크리스트에서 넘어온 경우 { corpName, acc }
+    // 체크리스트에서 넘어온 경우 registered 플래그 업데이트를 위해 출처 정보 저장
+    let _checklistSource = null; // { corpName: string, acc: string }
 
+    /**
+     * 캘린더 또는 체크리스트에서 prefill 데이터를 받아 자동으로 등록 모달을 엽니다.
+     * sessionStorage 'calendarPrefill' 키에 JSON으로 저장된 데이터를 읽어 폼에 채웁니다.
+     * - 공모가: 직접 전달된 경우 사용, 없으면 kokIdx로 상세 API 조회
+     * - 증권사: 전달된 경우 자동 설정 + 수수료 자동 채움
+     * - 계좌: 전달된 경우 자동 체크
+     */
     (function checkCalendarPrefill() {
         const raw = sessionStorage.getItem('calendarPrefill');
         if (!raw) return;
@@ -627,6 +804,7 @@
             if (p.accounts && p.stockName) {
                 _checklistSource = { corpName: p.stockName, acc: p.accounts };
             }
+            // 300ms 지연: 증권사 목록 로드 완료 대기
             setTimeout(() => {
                 document.getElementById('modalTitle').textContent = '청약 등록';
                 document.getElementById('ipoForm').reset();
@@ -634,6 +812,7 @@
                 document.getElementById('taxAndFee').value           = 0;
                 document.getElementById('subscriptionFee').value     = 0;
                 document.getElementById('soldQty').value             = 0;
+                // prefill 데이터로 폼 필드 채우기
                 if (p.stockName)             document.getElementById('stockName').value             = p.stockName;
                 if (p.subscriptionStartDate) document.getElementById('subscriptionStartDate').value = p.subscriptionStartDate;
                 if (p.subscriptionEndDate)   document.getElementById('subscriptionEndDate').value   = p.subscriptionEndDate;
@@ -657,13 +836,14 @@
                     if (fee !== undefined) document.getElementById('subscriptionFee').value = fee;
                 }
 
+                // 계좌 체크박스 자동 선택
                 setAccounts(p.accounts || '');
                 new bootstrap.Modal(document.getElementById('ipoModal')).show();
             }, 300);
         } catch (e) { console.warn('prefill parse error', e); }
     })();
-    initTabSwipe();
-    initPullRefresh();
+    initTabSwipe();     // 탭 간 스와이프 제스처 초기화 (swipe.js)
+    initPullRefresh();  // 당겨서 새로고침 초기화 (swipe.js)
 </script>
 </body>
 </html>
