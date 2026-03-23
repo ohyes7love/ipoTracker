@@ -103,6 +103,38 @@
         .empty-state { text-align: center; padding: 50px 20px; color: #adb5bd; font-size: 13px; line-height: 2; }
         .empty-icon  { font-size: 40px; display: block; margin-bottom: 8px; }
         .loading     { text-align: center; padding: 40px; color: #adb5bd; font-size: 13px; }
+
+        /* ══ 할일(TODO) 탭 ══════════════════════════════════ */
+        #todoSection { padding: 12px; }
+        .todo-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+        .todo-input-row input {
+            flex: 1; border: 1.5px solid #dee2e6; border-radius: 10px;
+            padding: 10px 14px; font-size: 14px; outline: none; transition: border-color .2s;
+        }
+        .todo-input-row input:focus { border-color: #0d6efd; }
+        .todo-input-row button {
+            background: #0d6efd; color: #fff; border: none;
+            border-radius: 10px; padding: 10px 16px; font-size: 18px; font-weight: 700; cursor: pointer;
+        }
+        .todo-group-hdr { font-size: 11px; font-weight: 700; color: #adb5bd; letter-spacing: .5px; margin: 14px 0 6px; padding-left: 4px; }
+        .todo-item {
+            background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+            display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 8px; transition: opacity .2s;
+        }
+        .todo-item.done { opacity: .55; }
+        .todo-chk {
+            width: 22px; height: 22px; border-radius: 50%; border: 2px solid #dee2e6; background: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background .2s, border-color .2s;
+        }
+        .todo-chk.checked { background: #0d6efd; border-color: #0d6efd; }
+        .todo-chk.checked::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 700; }
+        .todo-text { flex: 1; font-size: 14px; color: #212529; word-break: break-all; line-height: 1.4; }
+        .todo-item.done .todo-text { text-decoration: line-through; color: #adb5bd; }
+        .todo-del { background: none; border: none; font-size: 16px; color: #dee2e6; cursor: pointer; padding: 2px 4px; flex-shrink: 0; transition: color .15s; }
+        .todo-del:hover { color: #dc3545; }
+        .todo-clear-btn { background: none; border: 1px solid #dee2e6; border-radius: 8px; color: #adb5bd; font-size: 11px; padding: 5px 12px; cursor: pointer; margin-top: 4px; }
+        .todo-clear-btn:hover { border-color: #dc3545; color: #dc3545; }
+        .todo-empty { text-align: center; padding: 50px 20px; color: #adb5bd; font-size: 13px; line-height: 2; }
     </style>
 </head>
 <body>
@@ -117,10 +149,15 @@
     <div class="filter-tab"        data-filter="waiting" onclick="setFilter('waiting')">배정대기</div>
     <div class="filter-tab"        data-filter="listing" onclick="setFilter('listing')">상장예정</div>
     <div class="filter-tab"        data-filter="all"     onclick="setFilter('all')">전체</div>
+    <div class="filter-tab"        data-filter="todo"    onclick="setFilter('todo')">📝 할일</div>
 </div>
 
 <div class="section" id="cardSection">
     <div class="loading">kokstock 일정을 불러오는 중...</div>
+</div>
+
+<div id="todoSection" style="display:none">
+    <div id="todoInner"></div>
 </div>
 
 <nav class="bottom-nav">
@@ -146,7 +183,11 @@
         document.querySelectorAll('.filter-tab').forEach(t => {
             t.classList.toggle('active', t.dataset.filter === f);
         });
-        renderCards();
+        const isTodo = (f === 'todo');
+        document.getElementById('cardSection').style.display = isTodo ? 'none' : '';
+        document.getElementById('todoSection').style.display = isTodo ? '' : 'none';
+        document.getElementById('syncBtn').style.display     = isTodo ? 'none' : '';
+        if (isTodo) { renderTodos(); } else { renderCards(); }
     }
 
     function getStatus(item) {
@@ -368,6 +409,91 @@
             btn.textContent = '❌ 실패';
         }
         setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 동기화'; }, 2000);
+    }
+
+    // ══ 할일(TODO) 기능 ══════════════════════════════════════
+    // Spring Boot 버전: localStorage를 이용해 브라우저에 할일 저장
+    function _getTodos() {
+        try { return JSON.parse(localStorage.getItem('ipo_todos') || '[]'); } catch { return []; }
+    }
+    function _saveTodos(list) {
+        localStorage.setItem('ipo_todos', JSON.stringify(list));
+    }
+    function _nextTodoId() {
+        const list = _getTodos();
+        return list.length ? Math.max(...list.map(t => t.id)) + 1 : 1;
+    }
+
+    async function renderTodos() {
+        const el   = document.getElementById('todoInner');
+        const todos = _getTodos().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+        const pending = todos.filter(t => !t.done);
+        const done    = todos.filter(t =>  t.done);
+
+        let html = `
+        <div class="todo-input-row">
+            <input type="text" id="todoInput" placeholder="할일을 입력하세요..." maxlength="100"
+                   onkeydown="if(event.key==='Enter')addTodoItem()">
+            <button onclick="addTodoItem()">＋</button>
+        </div>`;
+
+        if (pending.length === 0 && done.length === 0) {
+            html += `<div class="todo-empty"><span style="font-size:36px">📝</span><br>할일이 없습니다.<br>위에 입력하여 추가하세요.</div>`;
+        } else {
+            if (pending.length > 0) {
+                html += `<div class="todo-group-hdr">📌 할일 (${pending.length})</div>`;
+                html += pending.map(t => _todoItemHtml(t)).join('');
+            }
+            if (done.length > 0) {
+                html += `<div class="todo-group-hdr">✅ 완료 (${done.length})</div>`;
+                html += done.map(t => _todoItemHtml(t)).join('');
+                html += `<button class="todo-clear-btn" onclick="clearDoneTodos()">완료 항목 모두 삭제</button>`;
+            }
+        }
+        el.innerHTML = html;
+    }
+
+    function _todoItemHtml(t) {
+        const chkCls  = t.done ? 'todo-chk checked' : 'todo-chk';
+        const itemCls = t.done ? 'todo-item done' : 'todo-item';
+        return `<div class="${itemCls}" id="todo-${t.id}">
+            <div class="${chkCls}" onclick="toggleTodo(${t.id}, ${!t.done})"></div>
+            <span class="todo-text">${_escHtml(t.text)}</span>
+            <button class="todo-del" onclick="deleteTodoItem(${t.id})" title="삭제">🗑️</button>
+        </div>`;
+    }
+
+    function _escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function addTodoItem() {
+        const input = document.getElementById('todoInput');
+        const text  = (input?.value || '').trim();
+        if (!text) { input?.focus(); return; }
+        input.value = '';
+        const list = _getTodos();
+        list.push({ id: _nextTodoId(), text, done: false, createdAt: new Date().toISOString() });
+        _saveTodos(list);
+        renderTodos();
+        document.getElementById('todoInput')?.focus();
+    }
+
+    function toggleTodo(id, done) {
+        const list = _getTodos().map(t => t.id === id ? { ...t, done } : t);
+        _saveTodos(list);
+        renderTodos();
+    }
+
+    function deleteTodoItem(id) {
+        _saveTodos(_getTodos().filter(t => t.id !== id));
+        renderTodos();
+    }
+
+    function clearDoneTodos() {
+        if (!confirm('완료된 항목을 모두 삭제할까요?')) return;
+        _saveTodos(_getTodos().filter(t => !t.done));
+        renderTodos();
     }
 
     loadData().catch(e => {

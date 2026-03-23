@@ -134,6 +134,80 @@
 
         /* ── 로딩 표시 ── */
         .loading { text-align: center; padding: 40px; color: #adb5bd; font-size: 13px; }
+
+        /* ══ 할일(TODO) 탭 ══════════════════════════════════ */
+        #todoSection { padding: 12px; }
+
+        /* 입력 폼 */
+        .todo-input-row {
+            display: flex; gap: 8px; margin-bottom: 16px;
+        }
+        .todo-input-row input {
+            flex: 1; border: 1.5px solid #dee2e6; border-radius: 10px;
+            padding: 10px 14px; font-size: 14px; outline: none;
+            transition: border-color .2s;
+        }
+        .todo-input-row input:focus { border-color: #0d6efd; }
+        .todo-input-row button {
+            background: #0d6efd; color: #fff; border: none;
+            border-radius: 10px; padding: 10px 16px;
+            font-size: 18px; font-weight: 700; cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* 그룹 헤더 (미완료 / 완료) */
+        .todo-group-hdr {
+            font-size: 11px; font-weight: 700; color: #adb5bd;
+            letter-spacing: .5px; margin: 14px 0 6px;
+            padding-left: 4px;
+        }
+
+        /* 개별 할일 아이템 */
+        .todo-item {
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px; margin-bottom: 8px;
+            transition: opacity .2s;
+        }
+        .todo-item.done { opacity: .55; }
+
+        /* 커스텀 체크박스 */
+        .todo-chk {
+            width: 22px; height: 22px; border-radius: 50%;
+            border: 2px solid #dee2e6; background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0; transition: background .2s, border-color .2s;
+        }
+        .todo-chk.checked { background: #0d6efd; border-color: #0d6efd; }
+        .todo-chk.checked::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 700; }
+
+        /* 할일 텍스트 */
+        .todo-text {
+            flex: 1; font-size: 14px; color: #212529; word-break: break-all; line-height: 1.4;
+        }
+        .todo-item.done .todo-text {
+            text-decoration: line-through; color: #adb5bd;
+        }
+
+        /* 삭제 버튼 */
+        .todo-del {
+            background: none; border: none; font-size: 16px;
+            color: #dee2e6; cursor: pointer; padding: 2px 4px;
+            flex-shrink: 0; transition: color .15s;
+        }
+        .todo-del:hover { color: #dc3545; }
+
+        /* 완료 항목 전체 삭제 버튼 */
+        .todo-clear-btn {
+            background: none; border: 1px solid #dee2e6; border-radius: 8px;
+            color: #adb5bd; font-size: 11px; padding: 5px 12px;
+            cursor: pointer; margin-top: 4px;
+        }
+        .todo-clear-btn:hover { border-color: #dc3545; color: #dc3545; }
+
+        /* 빈 상태 */
+        .todo-empty { text-align: center; padding: 50px 20px; color: #adb5bd; font-size: 13px; line-height: 2; }
     </style>
 </head>
 <body>
@@ -159,6 +233,7 @@
     <div class="filter-tab"        data-filter="waiting" onclick="setFilter('waiting')">배정대기</div>
     <div class="filter-tab"        data-filter="listing" onclick="setFilter('listing')">상장예정</div>
     <div class="filter-tab"        data-filter="all"     onclick="setFilter('all')">전체</div>
+    <div class="filter-tab"        data-filter="todo"    onclick="setFilter('todo')">📝 할일</div>
 </div>
 
 <!-- ════════════════════════════════════════════
@@ -167,6 +242,14 @@
      ════════════════════════════════════════════ -->
 <div class="section" id="cardSection">
     <div class="loading">kokstock 일정을 불러오는 중...</div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     할일(TODO) 섹션
+     - 할일 탭 선택 시 표시
+     ════════════════════════════════════════════ -->
+<div id="todoSection" style="display:none">
+    <div id="todoInner"></div>
 </div>
 
 <!-- ════════════════════════════════════════════
@@ -204,7 +287,18 @@
         document.querySelectorAll('.filter-tab').forEach(t => {
             t.classList.toggle('active', t.dataset.filter === f);
         });
-        renderCards();
+
+        const isTodo = (f === 'todo');
+        // 할일 탭이면 카드 섹션 숨기고 할일 섹션 표시 (동기화 버튼도 숨김)
+        document.getElementById('cardSection').style.display  = isTodo ? 'none' : '';
+        document.getElementById('todoSection').style.display  = isTodo ? '' : 'none';
+        document.getElementById('syncBtn').style.display      = isTodo ? 'none' : '';
+
+        if (isTodo) {
+            renderTodos();
+        } else {
+            renderCards();
+        }
     }
 
     /**
@@ -520,6 +614,107 @@
             btn.textContent = '❌ 실패';
         }
         setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 동기화'; }, 2000);
+    }
+
+    // ══ 할일(TODO) 기능 ══════════════════════════════════════
+
+    /**
+     * 할일 목록을 렌더링합니다.
+     * 미완료 / 완료 그룹으로 나눠 표시합니다.
+     */
+    async function renderTodos() {
+        const el = document.getElementById('todoInner');
+        el.innerHTML = '<div class="loading">불러오는 중...</div>';
+
+        let todos;
+        try { todos = await getAllTodos(); }
+        catch (e) { el.innerHTML = `<div class="loading" style="color:#dc3545">로드 실패: ${e.message}</div>`; return; }
+
+        const pending = todos.filter(t => !t.done);
+        const done    = todos.filter(t =>  t.done);
+
+        let html = `
+        <div class="todo-input-row">
+            <input type="text" id="todoInput" placeholder="할일을 입력하세요..." maxlength="100"
+                   onkeydown="if(event.key==='Enter')addTodoItem()">
+            <button onclick="addTodoItem()">＋</button>
+        </div>`;
+
+        if (pending.length === 0 && done.length === 0) {
+            html += `<div class="todo-empty"><span style="font-size:36px">📝</span><br>할일이 없습니다.<br>위에 입력하여 추가하세요.</div>`;
+        } else {
+            if (pending.length > 0) {
+                html += `<div class="todo-group-hdr">📌 할일 (${pending.length})</div>`;
+                html += pending.map(t => _todoItemHtml(t)).join('');
+            }
+            if (done.length > 0) {
+                html += `<div class="todo-group-hdr">✅ 완료 (${done.length})</div>`;
+                html += done.map(t => _todoItemHtml(t)).join('');
+                html += `<button class="todo-clear-btn" onclick="clearDoneTodos()">완료 항목 모두 삭제</button>`;
+            }
+        }
+
+        el.innerHTML = html;
+        // 입력창에 포커스 (키보드가 자동으로 올라오지 않도록 setTimeout 없이)
+        const input = document.getElementById('todoInput');
+        if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') addTodoItem(); });
+    }
+
+    /**
+     * 할일 아이템 HTML을 생성합니다.
+     * @param {{id:number, text:string, done:boolean}} t
+     */
+    function _todoItemHtml(t) {
+        const chkCls  = t.done ? 'todo-chk checked' : 'todo-chk';
+        const itemCls = t.done ? 'todo-item done' : 'todo-item';
+        return `<div class="${itemCls}" id="todo-${t.id}">
+            <div class="${chkCls}" onclick="toggleTodo(${t.id}, ${!t.done})"></div>
+            <span class="todo-text">${_escHtml(t.text)}</span>
+            <button class="todo-del" onclick="deleteTodoItem(${t.id})" title="삭제">🗑️</button>
+        </div>`;
+    }
+
+    /** HTML 특수문자 이스케이프 */
+    function _escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /** 입력창에서 새 할일 추가 */
+    async function addTodoItem() {
+        const input = document.getElementById('todoInput');
+        const text  = (input?.value || '').trim();
+        if (!text) { input?.focus(); return; }
+        input.value = '';
+        await addTodo(text);
+        await renderTodos();
+        document.getElementById('todoInput')?.focus();
+    }
+
+    /**
+     * 할일 완료/미완료 토글
+     * @param {number} id
+     * @param {boolean} done
+     */
+    async function toggleTodo(id, done) {
+        await updateTodo(id, { done });
+        await renderTodos();
+    }
+
+    /**
+     * 할일 삭제
+     * @param {number} id
+     */
+    async function deleteTodoItem(id) {
+        await deleteTodo(id);
+        await renderTodos();
+    }
+
+    /** 완료된 할일 전체 삭제 */
+    async function clearDoneTodos() {
+        if (!confirm('완료된 항목을 모두 삭제할까요?')) return;
+        const todos = await getAllTodos();
+        await Promise.all(todos.filter(t => t.done).map(t => deleteTodo(t.id)));
+        await renderTodos();
     }
 
     // ── 초기 로드 ────────────────────────────────────────────

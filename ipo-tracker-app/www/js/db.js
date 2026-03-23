@@ -29,7 +29,7 @@
 const DB_NAME    = 'ipoTracker';
 
 /** IndexedDB 스키마 버전 (Object Store 구조 변경 시 증가) */
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 /**
  * 증권사별 기본 청약수수료 목록.
@@ -99,6 +99,10 @@ function openDB() {
             // v2: 청약 체크리스트 (계좌별 신청/배정/환불 상태 관리)
             if (!db.objectStoreNames.contains('ipo_checklist')) {
                 db.createObjectStore('ipo_checklist', { keyPath: 'corpName' });
+            }
+            // v3: 할일(TODO) 목록 (id 자동증가 PK, 생성일·완료여부 포함)
+            if (!db.objectStoreNames.contains('todos')) {
+                db.createObjectStore('todos', { keyPath: 'id', autoIncrement: true });
             }
         };
         req.onsuccess = e => { _db = e.target.result; resolve(_db); };
@@ -812,6 +816,73 @@ async function getDartIpoSchedulesByMonth(year, month) {
     } catch {
         return [];
     }
+}
+
+// ── TODO CRUD ────────────────────────────────────────────────────────────────
+
+/**
+ * 모든 할일 목록을 생성일 오름차순으로 반환합니다.
+ * @returns {Promise<Array<{id:number, text:string, done:boolean, createdAt:string}>>}
+ */
+async function getAllTodos() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx   = db.transaction('todos', 'readonly');
+        const req  = tx.objectStore('todos').getAll();
+        req.onsuccess = () => resolve((req.result || []).sort((a, b) => a.createdAt.localeCompare(b.createdAt)));
+        req.onerror   = e => reject(e.target.error);
+    });
+}
+
+/**
+ * 새 할일을 추가합니다.
+ * @param {string} text - 할일 내용
+ * @returns {Promise<number>} 생성된 id
+ */
+async function addTodo(text) {
+    const db  = await openDB();
+    const item = { text: text.trim(), done: false, createdAt: new Date().toISOString() };
+    return new Promise((resolve, reject) => {
+        const tx  = db.transaction('todos', 'readwrite');
+        const req = tx.objectStore('todos').add(item);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror   = e => reject(e.target.error);
+    });
+}
+
+/**
+ * 할일의 완료 상태 또는 내용을 업데이트합니다.
+ * @param {number} id      - 대상 할일 id
+ * @param {Object} changes - 변경할 필드 ({ done?, text? })
+ */
+async function updateTodo(id, changes) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx    = db.transaction('todos', 'readwrite');
+        const store = tx.objectStore('todos');
+        const get   = store.get(id);
+        get.onsuccess = () => {
+            const item = { ...get.result, ...changes };
+            const put  = store.put(item);
+            put.onsuccess = () => resolve();
+            put.onerror   = e => reject(e.target.error);
+        };
+        get.onerror = e => reject(e.target.error);
+    });
+}
+
+/**
+ * 할일을 삭제합니다.
+ * @param {number} id - 삭제할 할일 id
+ */
+async function deleteTodo(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx  = db.transaction('todos', 'readwrite');
+        const req = tx.objectStore('todos').delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror   = e => reject(e.target.error);
+    });
 }
 
 // 앱 시작 시 초기화: broker_fee 스토어에 기본 수수료 데이터 삽입
