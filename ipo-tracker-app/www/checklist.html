@@ -253,25 +253,36 @@
         _dbMap = {};
         dbItems.forEach(d => { _dbMap[d.corpName] = d; });
 
-        // kokstock 일정과 DB 데이터 병합 (중복 종목 제거)
-        const seen = new Set();
-        _items = [];
+        // kokstock 일정과 DB 데이터 병합
+        // ※ 3월 청약 → 4월 상장처럼 월이 달라지는 경우:
+        //   sched1(3월)에는 청약일만 있고 상장일이 없을 수 있음
+        //   sched2(4월)에는 상장일만 있음 → 두 소스를 종목명 기준으로 머지
+        const schedMap = {};
         for (const s of [...sched1, ...sched2]) {
-            if (seen.has(s.corpName)) continue;
-            seen.add(s.corpName);
-
+            if (!schedMap[s.corpName]) {
+                schedMap[s.corpName] = { ...s };
+            } else {
+                // 이미 있는 항목에 누락된 필드만 보충 (상장일 등)
+                const m = schedMap[s.corpName];
+                if (!m.listingDate           && s.listingDate)           m.listingDate           = s.listingDate;
+                if (!m.subscriptionStartDate && s.subscriptionStartDate) m.subscriptionStartDate = s.subscriptionStartDate;
+                if (!m.subscriptionEndDate   && s.subscriptionEndDate)   m.subscriptionEndDate   = s.subscriptionEndDate;
+                if (!m.idx                   && s.idx)                   m.idx                   = s.idx;
+            }
+        }
+        _items = Object.values(schedMap).map(s => {
             const db = _dbMap[s.corpName];
-            _items.push({
-                corpName:             s.corpName,
-                kokIdx:               s.idx || '',        // kokstock 상세 조회용 idx
+            return {
+                corpName:              s.corpName,
+                kokIdx:                s.idx || '',        // kokstock 상세 조회용 idx
                 subscriptionStartDate: s.subscriptionStartDate || '',
                 subscriptionEndDate:   s.subscriptionEndDate   || '',
                 listingDate:           s.listingDate            || '',
                 offeringPrice:         db ? db.offeringPrice : 0,
                 // DB에 저장된 계좌별 상태가 있으면 사용, 없으면 기본값
                 accounts:              db ? db.accounts : defaultAccounts()
-            });
-        }
+            };
+        });
 
         renderCards();
     }

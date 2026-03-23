@@ -193,22 +193,32 @@
             _dbMap[d.corpName] = d;
         });
 
-        const seen = new Set();
-        _items = [];
+        // 3월 청약 → 4월 상장처럼 월이 다른 경우 sched1에 상장일이 없을 수 있으므로
+        // 종목명 기준으로 머지하여 누락 필드를 보충
+        const schedMap = {};
         for (const s of [...sched1, ...sched2]) {
-            if (seen.has(s.corpName)) continue;
-            seen.add(s.corpName);
+            if (!schedMap[s.corpName]) {
+                schedMap[s.corpName] = { ...s };
+            } else {
+                const m = schedMap[s.corpName];
+                if (!m.listingDate           && s.listingDate)           m.listingDate           = s.listingDate;
+                if (!m.subscriptionStartDate && s.subscriptionStartDate) m.subscriptionStartDate = s.subscriptionStartDate;
+                if (!m.subscriptionEndDate   && s.subscriptionEndDate)   m.subscriptionEndDate   = s.subscriptionEndDate;
+                if (!m.idx                   && s.idx)                   m.idx                   = s.idx;
+            }
+        }
+        _items = Object.values(schedMap).map(s => {
             const db = _dbMap[s.corpName];
-            _items.push({
-                corpName:             s.corpName,
-                kokIdx:               s.idx || '',
+            return {
+                corpName:              s.corpName,
+                kokIdx:                s.idx || '',
                 subscriptionStartDate: s.subscriptionStartDate || '',
                 subscriptionEndDate:   s.subscriptionEndDate   || '',
                 listingDate:           s.listingDate            || '',
                 offeringPrice:         db ? db.offeringPrice : 0,
                 _accounts:             db ? db._accounts : defaultAccounts()
-            });
-        }
+            };
+        });
         renderCards();
     }
 
