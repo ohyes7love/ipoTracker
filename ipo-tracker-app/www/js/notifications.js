@@ -5,8 +5,13 @@
  *  - 청약 신청한 종목: 마감 D-1 오전 9시 알림
  *  - 배정받은 종목:   상장당일 오전 8시 30분 알림
  *
+ * ■ Android 12+ 주의사항
+ *   앱이 종료된 상태에서도 정확한 시각에 알림이 오려면
+ *   AndroidManifest.xml에 SCHEDULE_EXACT_ALARM 권한이 있어야 하고
+ *   사용자가 [설정 → 앱 → 특별한 앱 권한 → 알람 및 알림]에서 허용해야 합니다.
+ *
  * Capacitor LocalNotifications 플러그인 필요:
- *   npm install @capacitor/local-notifications && npx cap sync android
+ *   npm install @capacitor/local-notifications@6 && npx cap sync android
  */
 
 /**
@@ -21,16 +26,17 @@
  *   2. 상장일 아침 알림 (ID 범위: 20000~29999)
  *      - 조건: 해당 종목에 qty > 0인 계좌가 1개 이상 존재 (배정 완료)
  *      - 시각: 상장일(listingDate) 오전 8시 30분
- *      - 미래 시각인 경우에만 등록 (이미 지난 알림은 건너뜀)
+ *      - 미래 시각인 경우에만 등록 (이미 상장한 종목 제외)
  *
  * 실행 흐름:
  *   1. Capacitor 네이티브 플랫폼 여부 확인 (웹에서는 실행하지 않음)
  *   2. LocalNotifications 플러그인 존재 여부 확인
  *   3. 알림 권한 요청 (거부 시 종료)
- *   4. 기존에 등록된 알림(ID 10000~29999) 전체 취소
- *   5. IndexedDB에서 체크리스트 전체 로드
- *   6. 각 종목별 알림 조건 검사 후 알림 객체 배열 구성
- *   7. 알림 일괄 스케줄 등록
+ *   4. Android 12+ 정확한 알람 권한 확인 → 없으면 시스템 설정 안내
+ *   5. 기존에 등록된 알림(ID 10000~29999) 전체 취소
+ *   6. IndexedDB에서 체크리스트 전체 로드
+ *   7. 각 종목별 알림 조건 검사 후 알림 객체 배열 구성
+ *   8. allowWhileIdle: true 로 알림 일괄 스케줄 등록 (도즈 모드 대응)
  *
  * @returns {Promise<void>}
  *   - Capacitor 환경이 아니거나, 플러그인 없거나, 권한 거부 시 조기 종료
@@ -46,6 +52,20 @@ async function scheduleIpoNotifications() {
     // 알림 권한 요청: 사용자가 거부하거나 오류 발생 시 함수 종료
     const perm = await lns.requestPermissions().catch(() => null);
     if (!perm || perm.display !== 'granted') return;
+
+    // Android 12+ 정확한 알람 권한 확인
+    // SCHEDULE_EXACT_ALARM 권한이 없으면 앱 종료 후 알림이 정확한 시각에 오지 않을 수 있음.
+    // 권한이 거부된 경우 시스템 설정 화면으로 안내합니다.
+    try {
+        const exactSetting = await lns.checkExactNotificationSetting().catch(() => null);
+        if (exactSetting && exactSetting.result === 'denied') {
+            console.warn('[알림] 정확한 알람 권한 없음 → 시스템 설정 화면으로 이동');
+            await lns.openExactNotificationSettings().catch(() => {});
+            return; // 사용자가 설정 후 앱을 다시 열면 재등록됨
+        }
+    } catch (_) {
+        // 구형 플러그인 버전에서는 checkExactNotificationSetting API가 없을 수 있음 → 무시
+    }
 
     try {
         // 기존 앱 알림 취소 (ID 10000–29999 범위)
@@ -68,21 +88,22 @@ async function scheduleIpoNotifications() {
             const hasApplied = Object.values(accs).some(a => a && a.applied);
             if (hasApplied && item.subscriptionEndDate) {
                 // 알림 시각 계산: 마감일 전날 오전 9시
-                const endDate   = new Date(item.subscriptionEndDate);
-                const notifyAt  = new Date(endDate);
+                const endDate  = new Date(item.subscriptionEndDate);
+                const notifyAt = new Date(endDate);
                 notifyAt.setDate(notifyAt.getDate() - 1);
                 notifyAt.setHours(9, 0, 0, 0);
 
                 // 현재 시각 이후인 경우에만 스케줄 등록 (이미 지난 알림 제외)
                 if (notifyAt.getTime() > now) {
                     scheduled.push({
-                        id:         10000 + idx,   // 체크리스트 인덱스를 ID로 사용 (10000번대)
-                        title:      '📅 청약마감 D-1',
-                        body:       `${item.corpName} — 내일 청약 마감입니다!`,
-                        schedule:   { at: notifyAt },
-                        sound:      'default',
-                        smallIcon:  'ic_stat_icon_config_sample',
-                        iconColor:  '#0d6efd'
+                        id:             10000 + idx,   // 체크리스트 인덱스를 ID로 사용 (10000번대)
+                        title:          '📅 청약마감 D-1',
+                        body:           `${item.corpName} — 내일 청약 마감입니다!`,
+                        schedule:       { at: notifyAt, allowWhileIdle: true }, // 도즈 모드에서도 발송
+                        sound:          'default',
+                        smallIcon:      'ic_stat_icon_config_sample',
+                        iconColor:      '#0d6efd',
+                        channelId:      'ipo_alerts'
                     });
                 }
             }
@@ -98,13 +119,14 @@ async function scheduleIpoNotifications() {
                 // 현재 시각 이후인 경우에만 스케줄 등록 (이미 상장한 종목 제외)
                 if (listAt.getTime() > now) {
                     scheduled.push({
-                        id:         20000 + idx,   // 체크리스트 인덱스를 ID로 사용 (20000번대)
-                        title:      '🎉 오늘 상장!',
-                        body:       `${item.corpName} — 오늘 상장합니다. 출금 확인하세요!`,
-                        schedule:   { at: listAt },
-                        sound:      'default',
-                        smallIcon:  'ic_stat_icon_config_sample',
-                        iconColor:  '#ffc107'
+                        id:             20000 + idx,   // 체크리스트 인덱스를 ID로 사용 (20000번대)
+                        title:          '🎉 오늘 상장!',
+                        body:           `${item.corpName} — 오늘 상장합니다. 출금 확인하세요!`,
+                        schedule:       { at: listAt, allowWhileIdle: true }, // 도즈 모드에서도 발송
+                        sound:          'default',
+                        smallIcon:      'ic_stat_icon_config_sample',
+                        iconColor:      '#ffc107',
+                        channelId:      'ipo_alerts'
                     });
                 }
             }
@@ -114,8 +136,34 @@ async function scheduleIpoNotifications() {
         if (scheduled.length) {
             await lns.schedule({ notifications: scheduled });
             console.log(`[알림] ${scheduled.length}개 스케줄 등록 완료`);
+        } else {
+            console.log('[알림] 등록할 알림 없음');
         }
     } catch (e) {
         console.warn('[알림] 스케줄 실패:', e);
+    }
+}
+
+/**
+ * 알림 채널을 생성합니다 (Android 8.0+).
+ * 앱 최초 실행 시 한 번 호출하면 됩니다.
+ * 채널이 없으면 일부 기기에서 알림이 표시되지 않을 수 있습니다.
+ */
+async function createNotificationChannel() {
+    if (typeof Capacitor === 'undefined' || !Capacitor.isNativePlatform()) return;
+    const lns = Capacitor.Plugins.LocalNotifications;
+    if (!lns || !lns.createChannel) return;
+    try {
+        await lns.createChannel({
+            id:          'ipo_alerts',
+            name:        '공모주 알림',
+            description: '청약마감 및 상장일 알림',
+            importance:  5,          // IMPORTANCE_HIGH: 헤드업 알림 표시
+            visibility:  1,          // VISIBILITY_PUBLIC: 잠금화면에도 표시
+            sound:       'default',
+            vibration:   true
+        });
+    } catch (e) {
+        console.warn('[알림] 채널 생성 실패:', e);
     }
 }

@@ -39,4 +39,11 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- LocalNotifications: 앱이 종료된 상태에서도 정확한 시각에 알림 발송 (Android 12+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- LocalNotifications: 알림 진동 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- LocalNotifications: 도즈 모드(절전)에서도 알림 발송 허용 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 </manifest>

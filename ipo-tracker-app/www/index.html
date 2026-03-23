@@ -498,6 +498,7 @@
     // ── 페이지 초기화 ──────────────────────────────────────
     loadTodayAlert();          // 오늘의 공모주 알림 로드
     loadWithdrawSummary();     // 미출금 요약 카드 로드
+    createNotificationChannel().catch(() => {}); // 알림 채널 생성 (Android 8+)
     scheduleIpoNotifications().catch(() => {}); // 앱 시작 시 알림 갱신
     initTabSwipe();            // 탭 간 스와이프 제스처 초기화 (swipe.js)
     initPullRefresh();         // 당겨서 새로고침 초기화 (swipe.js)
