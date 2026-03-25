@@ -71,7 +71,7 @@ async function scheduleIpoNotifications() {
         // 기존 앱 알림 취소 (ID 10000–29999 범위)
         // 체크리스트가 변경될 때마다 이전 알림을 모두 지우고 재등록합니다.
         const pending = await lns.getPending().catch(() => ({ notifications: [] }));
-        const toCancel = (pending.notifications || []).filter(n => n.id >= 10000 && n.id <= 29999);
+        const toCancel = (pending.notifications || []).filter(n => n.id >= 10000 && n.id <= 39999);
         if (toCancel.length) await lns.cancel({ notifications: toCancel }).catch(() => {});
 
         // 체크리스트 로드: db.js의 getAllChecklists() 사용
@@ -129,6 +129,30 @@ async function scheduleIpoNotifications() {
                         channelId:      'ipo_alerts'
                     });
                 }
+            }
+        });
+
+        // ── 출금 가능일 아침 알림 (매도일 T+2 영업일) ──
+        // getAllIpos()로 청약내역 전체 로드 후 매도일 있고 미출금인 항목만 처리
+        const ipoList = await getAllIpos().catch(() => []);
+        ipoList.forEach((item, idx) => {
+            if (!item.soldDate || item.withdrawn) return;
+
+            // bizday.js의 getWithdrawDate() 사용 (주말·공휴일 제외 T+2)
+            const wd = getWithdrawDate(item.soldDate);
+            wd.setHours(8, 30, 0, 0); // 출금 가능일 오전 8시 30분 알림
+
+            if (wd.getTime() > now) {
+                scheduled.push({
+                    id:         30000 + idx,  // 30000번대: 출금 가능일 알림
+                    title:      '🏦 출금 가능일!',
+                    body:       `${item.stockName} — 오늘 출금 가능합니다. 증권사 앱을 확인하세요!`,
+                    schedule:   { at: wd, allowWhileIdle: true },
+                    sound:      'default',
+                    smallIcon:  'ic_stat_icon_config_sample',
+                    iconColor:  '#198754',
+                    channelId:  'ipo_alerts'
+                });
             }
         });
 

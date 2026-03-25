@@ -109,6 +109,31 @@
         .withdraw-card .wc-left .wc-title { font-size: 13px; font-weight: 700; color: #856404; }
         .withdraw-card .wc-left .wc-count { font-size: 11px; color: #856404; opacity: 0.8; margin-top: 2px; }
         .withdraw-card .wc-amount { font-size: 20px; font-weight: 700; color: #dc3545; }
+
+        /* ── 출금 가능일 카드 ── */
+        .settle-card {
+            background: #fff; border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 14px; overflow: hidden;
+        }
+        .settle-header {
+            background: linear-gradient(135deg, #198754, #20c997);
+            padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .settle-header .sh-title { font-size: 14px; font-weight: 700; color: #fff; }
+        .settle-body { padding: 0 14px; }
+        .settle-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px;
+        }
+        .settle-row:last-child { border-bottom: none; }
+        .settle-row .sr-corp  { flex: 1; font-weight: 600; color: #212529; }
+        .settle-row .sr-date  { font-size: 11px; color: #888; }
+        /* 오늘 출금 가능: 빨간 강조 */
+        .settle-row.today-settle { background: #fff5f5; }
+        .settle-row.today-settle .sr-corp { color: #dc3545; }
+        .bdg-settle-today { background: #dc3545; color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; animation: pulse 1.2s infinite; }
+        .bdg-settle-soon  { background: #e8f5e9; color: #2e7d32; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
     </style>
 </head>
 <body>
@@ -141,6 +166,14 @@
             <span class="ha-date" id="todayDateLabel"></span>
         </div>
         <div class="today-alert-body" id="todayAlertBody"></div>
+    </div>
+
+    <!-- ── 출금 가능일 카드 ── 매도일 T+2 영업일 기준 출금 가능 종목 표시 -->
+    <div class="settle-card" id="settleCard" style="display:none">
+        <div class="settle-header">
+            <span class="sh-title">🏦 출금 가능일 안내</span>
+        </div>
+        <div class="settle-body" id="settleBody"></div>
     </div>
 
     <!-- ── 미출금 대기 요약 카드 ──
@@ -222,6 +255,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/swipe.js"></script>
+<script src="js/bizday.js"></script>
 <script src="js/db.js"></script>
 <script src="js/kokstock.js"></script>
 <script src="js/notifications.js"></script>
@@ -475,6 +509,48 @@
     }
 
     /**
+     * 출금 가능일 카드 로드
+     * 매도일(soldDate)이 있고 아직 출금 처리되지 않은 항목 중
+     * T+2 영업일 기준 출금 가능일이 오늘 이후인 항목을 표시합니다.
+     * - 오늘 출금 가능: 빨간 강조 + 깜빡임 뱃지
+     * - N일 후 출금 가능: 초록 뱃지
+     */
+    async function loadSettleAlert() {
+        try {
+            const ipos  = await getAllIpos();
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+
+            // 매도일 있고, 미출금인 항목만
+            const targets = ipos.filter(d => d.soldDate && !d.withdrawn);
+
+            const rows = targets.map(d => {
+                const wd   = getWithdrawDate(d.soldDate); // bizday.js
+                const diff = Math.round((wd - today) / 86400000);
+                return { ...d, wd, diff };
+            }).filter(d => d.diff >= 0) // 출금 가능일이 오늘 이후(오늘 포함)
+              .sort((a, b) => a.wd - b.wd); // 빠른 출금일 순
+
+            const card = document.getElementById('settleCard');
+            if (!rows.length) { card.style.display = 'none'; return; }
+
+            const fmt = n => Number(n).toLocaleString();
+            document.getElementById('settleBody').innerHTML = rows.map(d => {
+                const wdStr  = d.wd.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+                const isToday = d.diff === 0;
+                const badge  = isToday
+                    ? `<span class="bdg-settle-today">오늘 출금!</span>`
+                    : `<span class="bdg-settle-soon">D-${d.diff}</span>`;
+                return `<div class="settle-row${isToday ? ' today-settle' : ''}">
+                    ${badge}
+                    <span class="sr-corp">${d.stockName}</span>
+                    <span class="sr-date">${wdStr}</span>
+                </div>`;
+            }).join('');
+            card.style.display = 'block';
+        } catch (e) { /* silent */ }
+    }
+
+    /**
      * 미출금 요약 카드 로드
      * 출금 처리되지 않은(withdrawn=false) IPO 내역을 집계하여
      * 건수와 합계 금액을 미출금 카드에 표시합니다.
@@ -497,6 +573,7 @@
 
     // ── 페이지 초기화 ──────────────────────────────────────
     loadTodayAlert();          // 오늘의 공모주 알림 로드
+    loadSettleAlert();         // 출금 가능일 카드 로드
     loadWithdrawSummary();     // 미출금 요약 카드 로드
     createNotificationChannel().catch(() => {}); // 알림 채널 생성 (Android 8+)
     scheduleIpoNotifications().catch(() => {}); // 앱 시작 시 알림 갱신
