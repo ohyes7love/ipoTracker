@@ -1,8 +1,7 @@
 /**
  * generate-icon.js
- * 공모주 앱 아이콘 PNG 자동 생성 스크립트
+ * 공모주 앱 아이콘 PNG 자동 생성 스크립트 (로켓 디자인)
  * 사용: node generate-icon.js
- * 필요: npm install sharp
  */
 const sharp = require('sharp');
 const path  = require('path');
@@ -27,52 +26,73 @@ function buildFullSvg(size) {
       <stop offset="100%" stop-color="#1565e8"/>
     </linearGradient>
   </defs>
-  <rect width="1024" height="1024" rx="230" ry="230" fill="url(#bg)"/>
-  <line x1="160" y1="790" x2="864" y2="790"
-        stroke="rgba(255,255,255,0.35)" stroke-width="18" stroke-linecap="round"/>
-  <rect x="160" y="580" width="160" height="210" rx="32" ry="32" fill="rgba(255,255,255,0.60)"/>
-  <rect x="432" y="400" width="160" height="390" rx="32" ry="32" fill="rgba(255,255,255,0.80)"/>
-  <rect x="704" y="200" width="160" height="590" rx="32" ry="32" fill="rgba(255,255,255,1.00)"/>
-  <polyline points="240,580 512,400 784,200"
-            fill="none" stroke="#FFD000" stroke-width="36"
-            stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="784" cy="200" r="46" fill="#FFD000"/>
-  <polygon points="870,110 960,80 935,168" fill="#FFD000"/>
+
+  <!-- 배경 -->
+  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bg)"/>
+
+  <!-- 별 장식 -->
+  <circle cx="210" cy="230" r="18" fill="white" opacity="0.75"/>
+  <circle cx="800" cy="290" r="14" fill="white" opacity="0.55"/>
+  <circle cx="165" cy="480" r="10" fill="white" opacity="0.45"/>
+  <circle cx="845" cy="510" r="9"  fill="white" opacity="0.35"/>
+  <circle cx="310" cy="155" r="13" fill="white" opacity="0.65"/>
+  <circle cx="720" cy="160" r="9"  fill="white" opacity="0.50"/>
+
+  <!-- 불꽃 (골드) -->
+  <path d="M400,665 L624,665 Q582,830 512,930 Q442,830 400,665 Z" fill="#FFD000"/>
+  <!-- 불꽃 안쪽 하이라이트 -->
+  <path d="M445,665 L579,665 Q550,795 512,875 Q474,795 445,665 Z" fill="white" opacity="0.30"/>
+
+  <!-- 로켓 몸체 (흰색) -->
+  <path d="M388,665 L388,355 Q388,135 512,105 Q636,135 636,355 L636,665 Z" fill="white"/>
+
+  <!-- 왼쪽 날개 -->
+  <path d="M388,665 L285,825 L388,755 Z" fill="white"/>
+
+  <!-- 오른쪽 날개 -->
+  <path d="M636,665 L739,825 L636,755 Z" fill="white"/>
+
+  <!-- 창문 (파란 원) -->
+  <circle cx="512" cy="415" r="75" fill="#1262d4"/>
+  <!-- 창문 광택 -->
+  <circle cx="488" cy="392" r="22" fill="white" opacity="0.55"/>
 </svg>`;
 }
 
 // ── foreground 전용 SVG (투명 배경) ──────────────────────
 function buildFgSvg(size) {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 1024 1024">
-  <line x1="160" y1="790" x2="864" y2="790"
-        stroke="rgba(255,255,255,0.35)" stroke-width="18" stroke-linecap="round"/>
-  <rect x="160" y="580" width="160" height="210" rx="32" ry="32" fill="rgba(255,255,255,0.60)"/>
-  <rect x="432" y="400" width="160" height="390" rx="32" ry="32" fill="rgba(255,255,255,0.80)"/>
-  <rect x="704" y="200" width="160" height="590" rx="32" ry="32" fill="rgba(255,255,255,1.00)"/>
-  <polyline points="240,580 512,400 784,200"
-            fill="none" stroke="#FFD000" stroke-width="36"
-            stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="784" cy="200" r="46" fill="#FFD000"/>
-  <polygon points="870,110 960,80 935,168" fill="#FFD000"/>
+  <circle cx="210" cy="230" r="18" fill="white" opacity="0.75"/>
+  <circle cx="800" cy="290" r="14" fill="white" opacity="0.55"/>
+  <circle cx="165" cy="480" r="10" fill="white" opacity="0.45"/>
+  <circle cx="310" cy="155" r="13" fill="white" opacity="0.65"/>
+
+  <path d="M400,665 L624,665 Q582,830 512,930 Q442,830 400,665 Z" fill="#FFD000"/>
+  <path d="M445,665 L579,665 Q550,795 512,875 Q474,795 445,665 Z" fill="white" opacity="0.30"/>
+
+  <path d="M388,665 L388,355 Q388,135 512,105 Q636,135 636,355 L636,665 Z" fill="white"/>
+  <path d="M388,665 L285,825 L388,755 Z" fill="white"/>
+  <path d="M636,665 L739,825 L636,755 Z" fill="white"/>
+
+  <circle cx="512" cy="415" r="75" fill="#1262d4"/>
+  <circle cx="488" cy="392" r="22" fill="white" opacity="0.55"/>
 </svg>`;
 }
 
 async function generate() {
-    console.log('아이콘 PNG 생성 중...\n');
+    console.log('🚀 로켓 아이콘 PNG 생성 중...\n');
     for (const { dir, size } of SIZES) {
         const outDir = path.join(RES_DIR, dir);
         if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-        // ic_launcher.png / ic_launcher_round.png (배경 포함)
         const fullSvg = Buffer.from(buildFullSvg(size));
         await sharp(fullSvg).png().toFile(path.join(outDir, 'ic_launcher.png'));
         await sharp(fullSvg).png().toFile(path.join(outDir, 'ic_launcher_round.png'));
 
-        // ic_launcher_foreground.png (투명 배경)
         const fgSvg = Buffer.from(buildFgSvg(size));
         await sharp(fgSvg).png().toFile(path.join(outDir, 'ic_launcher_foreground.png'));
 
-        console.log(`  ✅ ${dir} (${size}px) — launcher + round + foreground`);
+        console.log(`  ✅ ${dir} (${size}px)`);
     }
     console.log('\n완료!');
 }
