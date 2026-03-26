@@ -542,7 +542,7 @@
                     : `<span class="bdg-settle-soon">D-${d.diff}</span>`;
                 return `<div class="settle-row${isToday ? ' today-settle' : ''}">
                     ${badge}
-                    <span class="sr-corp">${d.stockName}</span>
+                    <span class="sr-corp">${d.stockName}${d.accounts ? ` <span style="font-weight:400;color:#888;font-size:11px">(${d.accounts})</span>` : ''}</span>
                     <span class="sr-date">${wdStr}</span>
                 </div>`;
             }).join('');
