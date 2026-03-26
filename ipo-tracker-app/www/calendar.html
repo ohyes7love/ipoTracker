@@ -350,10 +350,29 @@
         const manualItems = await getAllIpos();
         buildGrid(buildEventMap(manualItems, [], monthStr));
 
-        // 2단계: kokstock API 데이터를 받아 달력 갱신 (비동기)
-        getKokstockSchedulesByMonth(curYear, curMonth)
-            .then(sched => { buildGrid(buildEventMap(manualItems, sched, monthStr)); })
-            .catch(e => console.warn('kokstock error', e));
+        // 2단계: 이번 달 + 다음 달 데이터를 병렬로 가져와 달력 갱신
+        // ※ 이번 달 청약 → 다음 달 상장인 종목의 상장일을 채우기 위해 다음 달도 조회
+        const nextYear  = curMonth === 12 ? curYear + 1 : curYear;
+        const nextMonth = curMonth === 12 ? 1 : curMonth + 1;
+        Promise.all([
+            getKokstockSchedulesByMonth(curYear, curMonth),
+            getKokstockSchedulesByMonth(nextYear, nextMonth)
+        ]).then(([sched, nextSched]) => {
+            // 두 달치 데이터를 종목명 기준으로 병합 (누락된 상장일 보충)
+            const merged = {};
+            for (const s of [...sched, ...nextSched]) {
+                if (!merged[s.corpName]) {
+                    merged[s.corpName] = { ...s };
+                } else {
+                    const m = merged[s.corpName];
+                    if (!m.listingDate           && s.listingDate)           m.listingDate           = s.listingDate;
+                    if (!m.subscriptionStartDate && s.subscriptionStartDate) m.subscriptionStartDate = s.subscriptionStartDate;
+                    if (!m.subscriptionEndDate   && s.subscriptionEndDate)   m.subscriptionEndDate   = s.subscriptionEndDate;
+                    if (!m.idx                   && s.idx)                   m.idx                   = s.idx;
+                }
+            }
+            buildGrid(buildEventMap(manualItems, Object.values(merged), monthStr));
+        }).catch(e => console.warn('kokstock error', e));
     }
 
     // ── 상세 바텀시트 ──────────────────────────────────────
