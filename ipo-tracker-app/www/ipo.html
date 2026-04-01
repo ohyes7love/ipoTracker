@@ -80,6 +80,13 @@
         .btn-withdraw.done {
             background: #d1e7dd; color: #0a3622; border-color: #a3cfbb; cursor: default; font-weight: 600;
         }
+        /* 출금 가능 뱃지 */
+        .bdg-withdrawable {
+            background: #dc3545; color: #fff; border-radius: 6px;
+            padding: 2px 7px; font-size: 11px; font-weight: 700;
+            animation: wdpulse 1.2s infinite;
+        }
+        @keyframes wdpulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         /* 아이콘 버튼 (복사, 삭제) */
         .btn-icon {
             background: none; border: none; font-size: 18px;
@@ -330,6 +337,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/swipe.js"></script>
+<script src="js/bizday.js"></script>
 <script src="js/kokstock.js"></script>
 <script src="js/db.js"></script>
 <script>
@@ -583,10 +591,17 @@
             // 수정 모달 오픈을 위해 데이터를 JSON으로 직렬화 (단따옴표 이스케이프)
             const dataStr = JSON.stringify(d).replace(/'/g, '&#39;');
             const isWithdrawn = !!d.withdrawn;
+            // 출금 가능 여부: 매도일 있고, 미출금이고, T+2 영업일 도래
+            const canWithdraw = !isWithdrawn && d.soldDate && (() => {
+                const wd = getWithdrawDate(d.soldDate);
+                const today = new Date(); today.setHours(0,0,0,0);
+                return wd <= today;
+            })();
             html += `<div class="ipo-card" onclick='openEditModal(${dataStr})'>
   <div class="ipo-card-header">
     <span class="stock-name">${d.stockName}</span>
     <div class="card-actions" onclick="event.stopPropagation()">
+      ${canWithdraw ? `<span class="bdg-withdrawable">출금가능</span>` : ''}
       <!-- 출금 버튼: 미출금이면 클릭 가능, 출금 완료이면 비활성화 -->
       <button class="btn-withdraw ${isWithdrawn ? 'done' : ''}"
               onclick="${isWithdrawn ? '' : `toggleWithdrawn(${d.id})`}"
